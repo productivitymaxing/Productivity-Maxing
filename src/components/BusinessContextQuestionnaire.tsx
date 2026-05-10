@@ -362,25 +362,25 @@ const BusinessContextQuestionnaire: React.FC = () => {
 
   if (formCompleted) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white transition-colors duration-500">
+      <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-500">
         <div className="max-w-3xl mx-auto px-6 py-24 text-center">
           <div className="inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] text-white mb-8">
             Questionnaire Submitted
           </div>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-6">Thanks. We&apos;ve received your responses.</h1>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
+          <h1 className="text-4xl md:text-5xl font-semibold mb-6 text-slate-900 dark:text-white">Thanks. We&apos;ve received your responses.</h1>
+          <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
             We’ll review your business, systems, and goals, then reach out with the next steps.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-full bg-white text-slate-950 px-8 py-4 font-semibold shadow-lg hover:bg-slate-100 transition"
+              className="inline-flex items-center justify-center rounded-full bg-blue-600 dark:bg-white text-white dark:text-slate-950 px-8 py-4 font-semibold shadow-lg hover:bg-blue-700 dark:hover:bg-slate-100 transition"
             >
               Go to Homepage
             </Link>
             <Link
               href="/business-tools"
-              className="inline-flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-white px-8 py-4 font-semibold shadow-lg hover:bg-slate-700 transition"
+              className="inline-flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white px-8 py-4 font-semibold shadow-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition"
             >
               Explore Software Suite
             </Link>
