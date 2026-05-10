@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   title: 'Productivity Maxing - Business Performance Engineering',
   description: 'We Engineer Elite Business Performance. Premium business tools, high performance frameworks, and workflows that scale output.',
   keywords: 'business performance, consulting, optimization, business tools',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({

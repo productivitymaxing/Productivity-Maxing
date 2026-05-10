@@ -196,7 +196,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
   const renderField = () => {
     const fieldProps = {
       ...register(currentQuestion.name, { required: currentQuestion.required }),
-      className: `w-full px-6 py-4 text-lg border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
+      className: `w-full px-6 py-4 text-lg border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-transparent dark:bg-slate-800/50 border-transparent dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
         errors[currentQuestion.name] ? 'border-red-500 dark:border-red-400' : ''
       }`,
       placeholder: currentQuestion.placeholder,
@@ -208,9 +208,9 @@ const BusinessContextQuestionnaire: React.FC = () => {
     } else if (currentQuestion.type === 'select') {
       return (
         <select {...fieldProps} className={`${fieldProps.className} cursor-pointer`}>
-          <option value="" className="text-slate-400">Select an option...</option>
+          <option value="" className="text-slate-400 bg-transparent">Select an option...</option>
           {currentQuestion.options?.map((option: string) => (
-            <option key={option} value={option} className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800">{option}</option>
+            <option key={option} value={option} className="text-slate-900 dark:text-slate-100 bg-transparent">{option}</option>
           ))}
         </select>
       );
@@ -265,7 +265,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
         {/* Question Container */}
         <div className="relative">
           <div className={`transition-all duration-300 ${isTransitioning ? 'opacity-0 transform translate-x-4' : 'opacity-100 transform translate-x-0'}`}>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-slate-900/50 p-8 md:p-12">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-slate-900/50 p-8 md:p-12 border border-slate-200/50 dark:border-slate-700/50">
               <div className="mb-8">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-6 leading-tight">
                   {currentQuestion.label}
