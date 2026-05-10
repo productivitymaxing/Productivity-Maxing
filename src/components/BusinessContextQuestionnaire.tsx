@@ -274,6 +274,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentQuestionIndex(prev => prev + 1);
+      setInputValue('');
       setIsTransitioning(false);
     }, 300);
   };
@@ -340,7 +341,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
           <div className="inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] text-white mb-8">
             Questionnaire Submitted
           </div>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-6">Thanks. We’ve received your questionnaire.</h1>
+          <h1 className="text-4xl md:text-5xl font-semibold mb-6">Thanks. &quot;We’ve received your responses.&quot;</h1>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
             We’ll review your business, systems, and goals, then reach out with the next steps.
           </p>
@@ -349,7 +350,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
               href="/"
               className="inline-flex items-center justify-center rounded-full bg-white text-slate-950 px-8 py-4 font-semibold shadow-lg hover:bg-slate-100 transition"
             >
-              Return to Command Center
+              Go to Homepage
             </Link>
             <Link
               href="/business-tools"
