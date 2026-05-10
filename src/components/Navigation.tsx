@@ -56,7 +56,7 @@ export default function Navigation() {
               {mounted && isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             <Link
-              href="#newsletter"
+              href="/onboarding"
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 transition"
             >
               <MessageCircle size={15} />
@@ -89,7 +89,7 @@ export default function Navigation() {
             <Link href="/business-tools" className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Tools</Link>
             <Link href="/consulting" className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Consulting</Link>
             <Link
-              href="#newsletter"
+              href="/onboarding"
               className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 transition"
             >
               <MessageCircle size={14} />
