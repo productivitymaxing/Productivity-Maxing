@@ -84,12 +84,13 @@ export default function Navigation() {
 
         {isOpen && (
           <div className="md:hidden pb-4 space-y-2 text-sm">
-            <Link href="/" className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Home</Link>
-            <Link href="/about" className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">About</Link>
-            <Link href="/business-tools" className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Tools</Link>
-            <Link href="/consulting" className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Consulting</Link>
+            <Link href="/" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Home</Link>
+            <Link href="/about" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">About</Link>
+            <Link href="/business-tools" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Tools</Link>
+            <Link href="/consulting" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Consulting</Link>
             <Link
               href="/onboarding"
+              onClick={() => setIsOpen(false)}
               className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 transition"
             >
               <MessageCircle size={14} />
