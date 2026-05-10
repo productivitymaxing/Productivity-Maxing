@@ -265,9 +265,9 @@ const BusinessContextQuestionnaire: React.FC = () => {
         {/* Question Container */}
         <div className="relative">
           <div className={`transition-all duration-300 ${isTransitioning ? 'opacity-0 transform translate-x-4' : 'opacity-100 transform translate-x-0'}`}>
-            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-slate-900/50 p-8 md:p-12 border border-slate-200/50 dark:border-slate-700/50">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-slate-900/50 p-8 md:p-12 border border-transparent">
               <div className="mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-6 leading-tight">
+                <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-6 leading-tight">
                   {currentQuestion.label}
                   {currentQuestion.required && <span className="text-red-500 ml-2">*</span>}
                 </h2>
