@@ -257,15 +257,41 @@ const BusinessContextQuestionnaire: React.FC = () => {
   const quickAnswers = useMemo(() => getQuickAnswers(currentQuestion.name, industryNicheValue), [currentQuestion.name, industryNicheValue]);
 
   useEffect(() => {
+    // Load form data from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('formCompleted') === 'true';
+      setFormCompleted(saved);
+
+      // Restore form data from localStorage
+      const savedData = localStorage.getItem('formData');
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          Object.entries(parsedData).forEach(([key, value]) => {
+            setValue(key as keyof FormData, value as string);
+          });
+        } catch (e) {
+          console.error('Failed to restore form data:', e);
+        }
+      }
+    }
     setHydrated(true);
-    const saved = typeof window !== 'undefined' && localStorage.getItem('formCompleted') === 'true';
-    setFormCompleted(saved);
-  }, []);
+  }, [setValue]);
 
   useEffect(() => {
     const savedValue = watch(currentQuestion.name) ?? '';
     setInputValue(savedValue);
   }, [currentQuestionIndex, currentQuestion.name, watch]);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    const subscription = watch((data) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('formData', JSON.stringify(data));
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const nextQuestion = () => {
     if (!inputValue.trim()) return;
@@ -341,7 +367,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
           <div className="inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] text-white mb-8">
             Questionnaire Submitted
           </div>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-6">Thanks. &quot;We’ve received your responses.&quot;</h1>
+          <h1 className="text-4xl md:text-5xl font-semibold mb-6">Thanks. We&apos;ve received your responses.</h1>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
             We’ll review your business, systems, and goals, then reach out with the next steps.
           </p>
