@@ -172,10 +172,25 @@ const BusinessContextQuestionnaire: React.FC = () => {
     }
   };
 
-  const onSubmit = (data: FormData) => {
-    console.log('Form submitted:', data);
-    // Handle form submission here (e.g., send to API)
-    alert('Questionnaire submitted successfully!');
+  const onSubmit = async (data: FormData) => {
+    try {
+      const response = await fetch('https://formspree.io/f/xvzlvnbe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert('Thanks. We\'ve received your questionnaire. We\'ll review your business, systems, and goals, then reach out with the next steps.');
+      } else {
+        alert('There was an error submitting your questionnaire. Please try again.');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('There was an error submitting your questionnaire. Please try again.');
+    }
   };
 
   // Handle Enter key press
@@ -196,11 +211,12 @@ const BusinessContextQuestionnaire: React.FC = () => {
   const renderField = () => {
     const fieldProps = {
       ...register(currentQuestion.name, { required: currentQuestion.required }),
-      className: `w-full px-6 py-4 text-lg border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-transparent dark:bg-slate-800/50 border-transparent dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
+      className: `w-full px-6 py-4 text-lg border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-transparent dark:bg-slate-800/50 border-gray-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
         errors[currentQuestion.name] ? 'border-red-500 dark:border-red-400' : ''
       }`,
       placeholder: currentQuestion.placeholder,
-      onKeyPress: handleKeyPress
+      onKeyPress: handleKeyPress,
+      key: currentQuestionIndex,
     };
 
     if (currentQuestion.type === 'textarea') {
@@ -271,7 +287,7 @@ const BusinessContextQuestionnaire: React.FC = () => {
                   {currentQuestion.label}
                   {currentQuestion.required && <span className="text-red-500 ml-2">*</span>}
                 </h2>
-                <div className="space-y-1">
+                <div className="space-y-1" key={`field-${currentQuestionIndex}`}>
                   {renderField()}
                   {errors[currentQuestion.name] && (
                     <p className="text-red-500 dark:text-red-400 text-sm mt-2">This field is required</p>
