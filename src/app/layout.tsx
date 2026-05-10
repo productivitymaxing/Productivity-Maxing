@@ -22,7 +22,8 @@ export const metadata: Metadata = {
   description: 'We Engineer Elite Business Performance. Premium business tools, high performance frameworks, and workflows that scale output.',
   keywords: 'business performance, consulting, optimization, business tools',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/pm-logo-blue.svg',
+    shortcut: '/pm-logo-blue.svg',
     apple: '/apple-touch-icon.png',
   },
 }
