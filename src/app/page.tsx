@@ -24,13 +24,10 @@ export default function Home() {
               <Sparkles size={14} />
               Built for high-performance teams
             </span>
-            <h1 className="mt-6 text-4xl font-semibold leading-tight sm:text-5xl">
-              Productivity Maxing
-            </h1>
-            <p className="mt-5 text-lg text-slate-600 dark:text-slate-300">
+            <h1 className="mt-6 text-5xl font-semibold leading-tight sm:text-6xl">
               We Engineer Elite Business Performance
-            </p>
-            <p className="mt-3 text-base text-slate-500 dark:text-slate-400">
+            </h1>
+            <p className="mt-5 text-base text-slate-500 dark:text-slate-400">
               Premium Business tools. High performance frameworks. Workflows that scale output.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -39,7 +36,7 @@ export default function Home() {
                 Explore Tools
               </Link>
               <Link href="/consulting" className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
-                Learn About Consulting
+                Book A Strategy Call
               </Link>
             </div>
           </div>
