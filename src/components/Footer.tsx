@@ -23,7 +23,7 @@ export default function Footer() {
             <ul className="space-y-2 text-slate-600 dark:text-slate-400">
               <li><Link href="/about" className="hover:text-slate-900 dark:hover:text-white transition">About</Link></li>
               <li>
-                <a href="mailto:legal@productivitymaxing.com" className="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white transition">
+                <a href="mailto:info@productivitymaxing.com" className="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white transition">
                   <Mail size={14} />
                   Contact
                 </a>
