@@ -1,4 +1,4 @@
-import MaxAuditEngine from '@/components/MaxAuditEngine'
+import ProDiagnoseLauncher from '@/components/ProDiagnoseLauncher'
 
 export default function BusinessTools() {
   return (
@@ -16,16 +16,12 @@ export default function BusinessTools() {
       {/* ProDiagnose Section */}
       <section className="px-4 py-8 sm:py-12 border-b border-slate-200 dark:border-slate-800">
         <div className="mx-auto max-w-7xl mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-sm text-cyan-400">
-            <span>🔍</span>
-            ProDiagnose
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold mt-4 mb-3">Operational Diagnostics</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">Operational Diagnostics</h2>
           <p className="text-slate-600 dark:text-slate-300 max-w-2xl">
             Deep forensic analysis of your business infrastructure to identify hidden operational friction and revenue leakage.
           </p>
         </div>
-        <MaxAuditEngine />
+        <ProDiagnoseLauncher />
       </section>
 
       {/* Additional Context */}
