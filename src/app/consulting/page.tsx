@@ -252,9 +252,10 @@ export default function ConsultingTerminal() {
       {/* Header */}
       <header className="border-b border-slate-800/70 px-4 sm:px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center justify-between bg-slate-950/80 backdrop-blur-2xl sticky top-0 z-20">
         <div className="flex items-center gap-4">
-          <div className="relative grid h-11 w-11 place-items-center overflow-hidden border border-cyan-300/30 bg-cyan-300/10 shadow-[0_0_44px_rgba(34,211,238,0.2)]">
-            <div className="absolute h-16 w-16 animate-spin rounded-full border border-cyan-300/20 border-t-cyan-200/80" />
-            <div className="absolute h-7 w-7 animate-pulse bg-cyan-300/25 blur-md" />
+          <div className="relative grid h-11 w-11 place-items-center overflow-hidden border border-cyan-300/30 bg-cyan-300/10 shadow-[0_0_24px_rgba(34,211,238,0.14)]">
+            <div className="absolute inset-1 border border-white/10" />
+            <div className="absolute left-0 top-0 h-2 w-2 border-l border-t border-cyan-200/70" />
+            <div className="absolute bottom-0 right-0 h-2 w-2 border-b border-r border-cyan-200/70" />
             <Terminal className="relative z-10 h-5 w-5 text-cyan-100" />
           </div>
           <div>
@@ -329,10 +330,7 @@ export default function ConsultingTerminal() {
                     <span className="text-[10px] text-slate-600">{new Date().toLocaleTimeString()}</span>
                   </div>
                   <div className="flex items-center gap-1 text-slate-400 text-sm">
-                    <span className="animate-pulse">Analyzing</span>
-                    <span className="animate-bounce">.</span>
-                    <span className="animate-bounce delay-100">.</span>
-                    <span className="animate-bounce delay-200">.</span>
+                    <span>Analyzing operational signal...</span>
                   </div>
                 </div>
               </div>
@@ -382,10 +380,7 @@ export default function ConsultingTerminal() {
                 />
                 {isVoiceMode && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <span className="flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff88] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00ff88]"></span>
-                    </span>
+                    <span className="block h-2 w-2 bg-[#00ff88]" />
                   </div>
                 )}
               </div>
@@ -414,12 +409,16 @@ export default function ConsultingTerminal() {
         <div className="bg-slate-950/70 border-l border-slate-800/70 flex flex-col backdrop-blur-2xl">
           {/* Dashboard Header */}
           <div className="border-b border-slate-800/70 p-5">
-            <div className="relative mx-auto mb-5 grid h-40 w-40 place-items-center">
-              <div className="absolute inset-0 animate-pulse bg-cyan-300/10 blur-3xl" />
-              <div className="absolute h-40 w-40 animate-spin rounded-full border border-cyan-300/10 border-t-cyan-200/70" />
-              <div className="absolute h-28 w-28 animate-[spin_7s_linear_infinite_reverse] rounded-full border border-blue-400/10 border-r-blue-300/60" />
-              <div className="absolute h-20 w-20 border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-[0_0_70px_rgba(34,211,238,0.18)]" />
-              <div className="relative z-10 h-10 w-10 bg-cyan-200 shadow-[0_0_45px_rgba(34,211,238,0.8)]" />
+            <div className="relative mx-auto mb-5 grid h-36 w-36 place-items-center border border-cyan-300/20 bg-cyan-300/[0.03] shadow-[0_0_34px_rgba(34,211,238,0.12)]">
+              <div className="absolute inset-3 border border-white/10" />
+              <div className="absolute inset-7 border border-cyan-300/20" />
+              <div className="absolute left-0 top-0 h-5 w-5 border-l border-t border-cyan-200/80" />
+              <div className="absolute right-0 top-0 h-5 w-5 border-r border-t border-cyan-200/40" />
+              <div className="absolute bottom-0 left-0 h-5 w-5 border-b border-l border-cyan-200/40" />
+              <div className="absolute bottom-0 right-0 h-5 w-5 border-b border-r border-cyan-200/80" />
+              <div className="relative z-10 grid h-16 w-16 place-items-center border border-white/10 bg-slate-950">
+                <Activity className="h-7 w-7 text-cyan-200" />
+              </div>
             </div>
             <h2 className="text-xl text-slate-100 flex items-center justify-center gap-2">
               <Activity className="w-5 h-5 text-cyan-300" />
