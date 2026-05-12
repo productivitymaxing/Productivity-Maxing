@@ -210,7 +210,7 @@ export default function ConsultingTerminal() {
             y={labelY}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="text-[8px] fill-slate-400 font-mono"
+            className="text-[8px] fill-slate-400 "
           >
             {labels[i]}
           </text>
@@ -248,30 +248,34 @@ export default function ConsultingTerminal() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col">
+    <main className="min-h-screen bg-slate-950 flex flex-col text-slate-100 font-[var(--font-clash-display)] overflow-hidden">
       {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between bg-slate-950/95 backdrop-blur sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          <Terminal className="w-6 h-6 text-[#00ff88]" />
+      <header className="border-b border-slate-800/70 px-4 sm:px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center justify-between bg-slate-950/80 backdrop-blur-2xl sticky top-0 z-20">
+        <div className="flex items-center gap-4">
+          <div className="relative grid h-11 w-11 place-items-center overflow-hidden border border-cyan-300/30 bg-cyan-300/10 shadow-[0_0_44px_rgba(34,211,238,0.2)]">
+            <div className="absolute h-16 w-16 animate-spin rounded-full border border-cyan-300/20 border-t-cyan-200/80" />
+            <div className="absolute h-7 w-7 animate-pulse bg-cyan-300/25 blur-md" />
+            <Terminal className="relative z-10 h-5 w-5 text-cyan-100" />
+          </div>
           <div>
-            <h1 className="font-['Clash_Display'] text-xl text-slate-100 tracking-tight">
+            <h1 className="text-xl sm:text-2xl text-slate-100 tracking-tight">
               PERFORMANCE ENGINE
             </h1>
-            <p className="text-[10px] font-mono text-slate-500">
+            <p className="text-xs text-slate-500">
               Lead Performance Engineer // AI-Diagnostic Mode
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowLearnMore(true)}
-            className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-mono text-xs bg-transparent hover:bg-slate-800/50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-slate-100 text-sm bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 transition-colors"
           >
             <Info className="w-4 h-4" />
             Learn More
           </button>
           <button
-            className="flex items-center gap-2 px-4 py-2 bg-[#00ff88] hover:bg-[#00dd77] text-slate-950 font-mono text-xs font-semibold transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-300 hover:bg-blue-400 text-slate-950 text-sm font-semibold shadow-[0_0_35px_rgba(34,211,238,0.2)] transition-colors"
             onClick={() => window.location.href = "mailto:info@productivitymaxing.com?subject=Escalate%20to%20Principal%20Consultant"}
           >
             <User className="w-4 h-4" />
@@ -281,36 +285,36 @@ export default function ConsultingTerminal() {
       </header>
 
       {/* Main Split Layout */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.9fr)] overflow-hidden">
         {/* Left Panel: Terminal Chat (60%) */}
-        <div className="flex-1 lg:w-[60%] flex flex-col border-r border-slate-800">
+        <div className="min-h-[70vh] flex flex-col border-r border-slate-800/70 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.13),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.32),rgba(2,6,23,0))]">
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4">
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] p-4 border ${
+                  className={`max-w-[86%] p-4 sm:p-5 border backdrop-blur-xl ${
                     msg.role === "user"
-                      ? "bg-slate-800 border-slate-700 ml-12"
+                      ? "bg-cyan-300/10 border-cyan-300/20 ml-8 shadow-[0_0_30px_rgba(34,211,238,0.08)]"
                       : msg.role === "system"
                       ? "bg-[#00ff88]/10 border-[#00ff88]/30"
-                      : "bg-slate-900 border-slate-800"
+                      : "bg-white/[0.035] border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.25)]"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[10px] font-mono ${
+                    <span className={`text-[10px] ${
                       msg.role === "user" ? "text-blue-400" : "text-[#00ff88]"
                     }`}>
                       {msg.role === "user" ? "YOU" : "LEAD ENGINEER"}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-600">
+                    <span className="text-[10px] text-slate-600">
                       {msg.timestamp.toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="text-sm font-mono text-slate-200 leading-relaxed">
+                  <p className="text-base text-slate-200 leading-relaxed tracking-wide">
                     {msg.content}
                   </p>
                 </div>
@@ -319,12 +323,12 @@ export default function ConsultingTerminal() {
             
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-slate-900 border border-slate-800 p-4 max-w-[80%]">
+                <div className="bg-white/[0.035] border border-white/10 p-4 max-w-[80%] backdrop-blur-xl">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-mono text-[#00ff88]">LEAD ENGINEER</span>
-                    <span className="text-[10px] font-mono text-slate-600">{new Date().toLocaleTimeString()}</span>
+                    <span className="text-[10px] text-[#00ff88]">LEAD ENGINEER</span>
+                    <span className="text-[10px] text-slate-600">{new Date().toLocaleTimeString()}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-slate-400 font-mono text-sm">
+                  <div className="flex items-center gap-1 text-slate-400 text-sm">
                     <span className="animate-pulse">Analyzing</span>
                     <span className="animate-bounce">.</span>
                     <span className="animate-bounce delay-100">.</span>
@@ -336,18 +340,18 @@ export default function ConsultingTerminal() {
             
             {showBlueprintCTA && (
               <div className="flex justify-center py-6">
-                <div className="bg-[#00ff88]/10 border-2 border-[#00ff88] p-6 text-center">
-                  <p className="text-sm font-mono text-[#00ff88] mb-4">
+                <div className="bg-cyan-300/10 border border-cyan-300/30 p-6 text-center shadow-[0_0_60px_rgba(34,211,238,0.12)]">
+                  <p className="text-sm text-[#00ff88] mb-4">
                     DIAGNOSTIC COMPLETE. 6 FRICTION ZONES IDENTIFIED.
                   </p>
                   <button
-                className="flex items-center gap-2 px-6 py-3 bg-[#00ff88] hover:bg-[#00dd77] text-slate-950 font-mono font-semibold transition-colors"
+                className="flex items-center gap-2 px-6 py-3 bg-cyan-300 hover:bg-blue-400 text-slate-950 font-semibold transition-colors"
                 onClick={() => window.open("/consulting/blueprint", "_blank")}
               >
                 <Zap className="w-4 h-4" />
                 Generate Institutional Blueprint
               </button>
-                  <p className="text-[10px] font-mono text-slate-500 mt-3">
+                  <p className="text-[10px] text-slate-500 mt-3">
                     Full analysis + actionable playbook delivered to your inbox
                   </p>
                 </div>
@@ -358,7 +362,7 @@ export default function ConsultingTerminal() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-slate-800 p-4 bg-slate-900/50">
+          <div className="border-t border-slate-800/70 p-4 bg-slate-950/70 backdrop-blur-2xl">
             <div className="flex gap-3">
               <button
                 onClick={() => setIsVoiceMode(!isVoiceMode)}
@@ -374,7 +378,7 @@ export default function ConsultingTerminal() {
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
                   placeholder={isVoiceMode ? "Voice mode active (WebRTC placeholder)..." : "State your operational bottleneck..."}
                   disabled={isVoiceMode}
-                  className="w-full bg-slate-950 border border-slate-700 text-slate-200 font-mono text-sm placeholder:text-slate-600 h-11 px-3 focus:border-slate-500 focus:outline-none disabled:opacity-50"
+                  className="w-full bg-white/[0.035] border border-white/10 text-slate-100 text-base placeholder:text-slate-500 h-12 px-4 focus:border-cyan-300/60 focus:outline-none disabled:opacity-50"
                 />
                 {isVoiceMode && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -388,17 +392,17 @@ export default function ConsultingTerminal() {
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping || isVoiceMode}
-                className="px-4 py-2 bg-[#00ff88] hover:bg-[#00dd77] disabled:hover:bg-[#00ff88] text-slate-950 font-mono font-semibold disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-cyan-300 hover:bg-blue-400 disabled:hover:bg-cyan-300 text-slate-950 font-semibold disabled:opacity-50 transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>
             </div>
             <div className="flex items-center justify-between mt-2">
-              <p className="text-[10px] font-mono text-slate-600">
+              <p className="text-[10px] text-slate-600">
                 Step {Math.min(step + 1, 6)} of 6 • {step >= 6 ? "DIAGNOSTIC COMPLETE" : "FREE TIER"}
               </p>
               {isVoiceMode && (
-                <p className="text-[10px] font-mono text-[#00ff88]">
+                <p className="text-[10px] text-[#00ff88]">
                   Voice Mode: PAID TIER REQUIRED
                 </p>
               )}
@@ -407,30 +411,37 @@ export default function ConsultingTerminal() {
         </div>
 
         {/* Right Panel: Synthesis Dashboard (40%) */}
-        <div className="lg:w-[40%] bg-slate-900/50 border-l border-slate-800 flex flex-col">
+        <div className="bg-slate-950/70 border-l border-slate-800/70 flex flex-col backdrop-blur-2xl">
           {/* Dashboard Header */}
-          <div className="border-b border-slate-800 p-4">
-            <h2 className="font-['Clash_Display'] text-lg text-slate-200 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#00ff88]" />
-              LIVE SYNTHESIS
+          <div className="border-b border-slate-800/70 p-5">
+            <div className="relative mx-auto mb-5 grid h-40 w-40 place-items-center">
+              <div className="absolute inset-0 animate-pulse bg-cyan-300/10 blur-3xl" />
+              <div className="absolute h-40 w-40 animate-spin rounded-full border border-cyan-300/10 border-t-cyan-200/70" />
+              <div className="absolute h-28 w-28 animate-[spin_7s_linear_infinite_reverse] rounded-full border border-blue-400/10 border-r-blue-300/60" />
+              <div className="absolute h-20 w-20 border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-[0_0_70px_rgba(34,211,238,0.18)]" />
+              <div className="relative z-10 h-10 w-10 bg-cyan-200 shadow-[0_0_45px_rgba(34,211,238,0.8)]" />
+            </div>
+            <h2 className="text-xl text-slate-100 flex items-center justify-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-300" />
+              Consultant Core Online
             </h2>
-            <p className="text-[10px] font-mono text-slate-500 mt-1">
-              Real-time friction mapping and revenue analysis
+            <p className="text-sm text-slate-500 mt-1 text-center">
+              Live operational synthesis
             </p>
           </div>
 
           {/* Dashboard Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Revenue at Risk Counter */}
-            <div className="bg-slate-950 border border-slate-800 p-4">
+            <div className="bg-white/[0.035] border border-white/10 p-5 backdrop-blur-xl">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <TrendingDown className="w-4 h-4 text-[#ff2244]" />
-                  <span className="text-xs font-mono text-slate-400">REVENUE AT RISK</span>
+                  <span className="text-xs text-slate-400">Revenue at Risk</span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-600">ANNUAL PROJECTION</span>
+                <span className="text-[10px] text-slate-600">Annual projection</span>
               </div>
-              <p className="text-3xl font-mono text-[#ff2244] tracking-tight">
+              <p className="text-4xl text-rose-400 tracking-tight">
                 ${diagnosticData.revenueAtRisk.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </p>
               <div className="mt-2 h-1 bg-slate-800 rounded-full overflow-hidden">
@@ -442,15 +453,15 @@ export default function ConsultingTerminal() {
             </div>
 
             {/* Time Leaked Counter */}
-            <div className="bg-slate-950 border border-slate-800 p-4">
+            <div className="bg-white/[0.035] border border-white/10 p-5 backdrop-blur-xl">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#ffcc00]" />
-                  <span className="text-xs font-mono text-slate-400">TIME LEAKED</span>
+                  <span className="text-xs text-slate-400">Time Leaked</span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-600">HOURS/WEEK</span>
+                <span className="text-[10px] text-slate-600">Hours/week</span>
               </div>
-              <p className="text-3xl font-mono text-[#ffcc00] tracking-tight">
+              <p className="text-4xl text-amber-300 tracking-tight">
                 {diagnosticData.timeLeaked.toFixed(1)}h
               </p>
               <div className="mt-2 h-1 bg-slate-800 rounded-full overflow-hidden">
@@ -462,10 +473,10 @@ export default function ConsultingTerminal() {
             </div>
 
             {/* Friction Radar Chart */}
-            <div className="bg-slate-950 border border-slate-800 p-4">
+            <div className="bg-white/[0.035] border border-white/10 p-5 backdrop-blur-xl">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-4 h-4 text-[#00ff88]" />
-                <span className="text-xs font-mono text-slate-400">FRICTION MAP</span>
+                <span className="text-xs text-slate-400">Friction Map</span>
               </div>
               <div className="h-48">
                 {renderFrictionRadar()}
@@ -473,19 +484,19 @@ export default function ConsultingTerminal() {
             </div>
 
             {/* Bottlenecks List */}
-            <div className="bg-slate-950 border border-slate-800 p-4">
+            <div className="bg-white/[0.035] border border-white/10 p-5 backdrop-blur-xl">
               <div className="flex items-center gap-2 mb-3">
                 <Zap className="w-4 h-4 text-[#00aaff]" />
-                <span className="text-xs font-mono text-slate-400">IDENTIFIED BOTTLENECKS</span>
+                <span className="text-xs text-slate-400">Identified Bottlenecks</span>
               </div>
               <div className="space-y-2">
                 {diagnosticData.bottlenecks.length === 0 ? (
-                  <p className="text-xs font-mono text-slate-600 italic">
+                  <p className="text-xs text-slate-600 italic">
                     Awaiting diagnostic data...
                   </p>
                 ) : (
                   diagnosticData.bottlenecks.map((bottleneck, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs font-mono">
+                    <div key={i} className="flex items-center gap-2 text-xs">
                       <ChevronRight className="w-3 h-3 text-[#00ff88]" />
                       <span className="text-slate-300">{bottleneck}</span>
                     </div>
@@ -495,36 +506,36 @@ export default function ConsultingTerminal() {
             </div>
 
             {/* Live Data Integration (Paid Tier) */}
-            <div className="bg-slate-950 border border-dashed border-slate-700 p-4">
+            <div className="bg-white/[0.03] border border-dashed border-white/10 p-5 backdrop-blur-xl">
               <div className="flex items-center gap-2 mb-3">
                 <Activity className="w-4 h-4 text-slate-500" />
-                <span className="text-xs font-mono text-slate-500">LIVE DATA INTEGRATION</span>
-                <span className="text-[10px] font-mono text-[#00ff88] ml-auto">PAID TIER</span>
+                <span className="text-xs text-slate-500">Live Data Integration</span>
+                <span className="text-[10px] text-cyan-300 ml-auto">Paid Tier</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  className="flex items-center justify-center gap-1 px-3 py-2 border border-slate-700 text-slate-500 font-mono text-[10px] disabled:opacity-50"
+                  className="flex items-center justify-center gap-1 px-3 py-2 border border-white/10 text-slate-500 text-[10px] disabled:opacity-50"
                   disabled
                 >
                   <CreditCard className="w-3 h-3" />
                   Stripe
                 </button>
                 <button
-                  className="flex items-center justify-center gap-1 px-3 py-2 border border-slate-700 text-slate-500 font-mono text-[10px] disabled:opacity-50"
+                  className="flex items-center justify-center gap-1 px-3 py-2 border border-white/10 text-slate-500 text-[10px] disabled:opacity-50"
                   disabled
                 >
                   <Mail className="w-3 h-3" />
                   Gmail
                 </button>
                 <button
-                  className="flex items-center justify-center gap-1 px-3 py-2 border border-slate-700 text-slate-500 font-mono text-[10px] disabled:opacity-50"
+                  className="flex items-center justify-center gap-1 px-3 py-2 border border-white/10 text-slate-500 text-[10px] disabled:opacity-50"
                   disabled
                 >
                   <MessageSquare className="w-3 h-3" />
                   Slack
                 </button>
               </div>
-              <p className="text-[10px] font-mono text-slate-600 mt-2">
+              <p className="text-[10px] text-slate-600 mt-2">
                 Connect live data sources for real-time telemetry analysis
               </p>
             </div>
@@ -541,7 +552,7 @@ export default function ConsultingTerminal() {
           />
           <div className="relative w-full max-w-2xl bg-slate-950 border-l border-slate-800 h-full overflow-y-auto">
             <div className="sticky top-0 bg-slate-950/95 backdrop-blur border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-              <h2 className="font-['Clash_Display'] text-xl text-slate-200">
+              <h2 className="text-xl text-slate-200">
                 Performance Consulting
               </h2>
               <button
@@ -555,25 +566,25 @@ export default function ConsultingTerminal() {
             <div className="p-6 space-y-8">
               {/* Who This Is For */}
               <section>
-                <h3 className="font-['Clash_Display'] text-2xl text-slate-200 mb-4">
+                <h3 className="text-2xl text-slate-200 mb-4">
                   Who This Is For
                 </h3>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <span className="text-[#00ff88] font-bold text-xl">✓</span>
-                    <span className="text-slate-300 font-mono text-sm">
+                    <span className="text-slate-300 text-sm">
                       You are generating revenue but operational friction caps your ceiling.
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="text-[#00ff88] font-bold text-xl">✓</span>
-                    <span className="text-slate-300 font-mono text-sm">
+                    <span className="text-slate-300 text-sm">
                       You need execution and complete implementation.
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="text-[#00ff88] font-bold text-xl">✓</span>
-                    <span className="text-slate-300 font-mono text-sm">
+                    <span className="text-slate-300 text-sm">
                       You treat performance as an engineering problem with an engineering solution.
                     </span>
                   </li>
@@ -582,42 +593,42 @@ export default function ConsultingTerminal() {
 
               {/* Engagement Model */}
               <section>
-                <h3 className="font-['Clash_Display'] text-2xl text-slate-200 mb-4">
+                <h3 className="text-2xl text-slate-200 mb-4">
                   The Engagement Model
                 </h3>
                 <div className="space-y-4">
                   <div className="border-l-4 border-[#00ff88] pl-4 py-2 bg-slate-900/50">
-                    <h4 className="font-['Clash_Display'] text-xl text-slate-200 mb-1">
+                    <h4 className="text-xl text-slate-200 mb-1">
                       01 / Diagnose
                     </h4>
-                    <p className="text-[#00aaff] font-mono text-xs mb-2">
+                    <p className="text-[#00aaff] text-xs mb-2">
                       Bottleneck Audit | Pro-Diagnose
                     </p>
-                    <p className="text-slate-400 font-mono text-sm">
+                    <p className="text-slate-400 text-sm">
                       Business Performance Score across 5 dimensions. You see exactly where friction lives before committing to anything.
                     </p>
                   </div>
 
                   <div className="border-l-4 border-[#00aaff] pl-4 py-2 bg-slate-900/50">
-                    <h4 className="font-['Clash_Display'] text-xl text-slate-200 mb-1">
+                    <h4 className="text-xl text-slate-200 mb-1">
                       02 / Optimize
                     </h4>
-                    <p className="text-[#00aaff] font-mono text-xs mb-2">
+                    <p className="text-[#00aaff] text-xs mb-2">
                       90-Day Sprint | Pro-Optimize
                     </p>
-                    <p className="text-slate-400 font-mono text-sm">
+                    <p className="text-slate-400 text-sm">
                       Bottlenecks mapped to playbooks. Systems built, documented, and installed. Weekly progress reports. No ambiguity.
                     </p>
                   </div>
 
                   <div className="border-l-4 border-[#ffcc00] pl-4 py-2 bg-slate-900/50">
-                    <h4 className="font-['Clash_Display'] text-xl text-slate-200 mb-1">
+                    <h4 className="text-xl text-slate-200 mb-1">
                       03 / Scale
                     </h4>
-                    <p className="text-[#00aaff] font-mono text-xs mb-2">
+                    <p className="text-[#00aaff] text-xs mb-2">
                       Growth Execution | Pro-Scale
                     </p>
-                    <p className="text-slate-400 font-mono text-sm">
+                    <p className="text-slate-400 text-sm">
                       90-day growth plan with defined KPIs. Natural handoff into retained advisory as the business expands.
                     </p>
                   </div>
@@ -626,7 +637,7 @@ export default function ConsultingTerminal() {
 
               {/* Deliverables */}
               <section>
-                <h3 className="font-['Clash_Display'] text-2xl text-slate-200 mb-4">
+                <h3 className="text-2xl text-slate-200 mb-4">
                   What Every Engagement Produces
                 </h3>
                 <ul className="space-y-2">
@@ -639,7 +650,7 @@ export default function ConsultingTerminal() {
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <span className="text-[#00ff88] font-bold">•</span>
-                      <span className="text-slate-300 font-mono text-sm">{item}</span>
+                      <span className="text-slate-300 text-sm">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -647,14 +658,14 @@ export default function ConsultingTerminal() {
 
               {/* CTA */}
               <div className="bg-slate-900 border border-slate-800 p-6 text-center">
-                <h3 className="font-['Clash_Display'] text-xl text-slate-200 mb-3">
+                <h3 className="text-xl text-slate-200 mb-3">
                   Ready to Engineer Your Performance?
                 </h3>
-                <p className="text-slate-400 font-mono text-sm mb-4">
+                <p className="text-slate-400 text-sm mb-4">
                   Continue your diagnostic or escalate to a Principal Consultant.
                 </p>
                 <button
-                  className="px-6 py-3 bg-[#00ff88] hover:bg-[#00dd77] text-slate-950 font-mono font-semibold transition-colors"
+                  className="px-6 py-3 bg-[#00ff88] hover:bg-[#00dd77] text-slate-950  font-semibold transition-colors"
                   onClick={() => setShowLearnMore(false)}
                 >
                   Return to Diagnostic
