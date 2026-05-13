@@ -1,0 +1,23 @@
+name = "productivity-maxing-business-intelligence"
+main = "cloudflare/worker.ts"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "productivity-maxing-business-intelligence"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[vars]
+JWT_SECRET = "replace-with-wrangler-secret-in-production"
+
+# Configure production secrets with:
+# wrangler secret put JWT_SECRET
+# wrangler secret put GOOGLE_CLIENT_ID
+# wrangler secret put GOOGLE_CLIENT_SECRET
+# wrangler secret put GITHUB_CLIENT_ID
+# wrangler secret put GITHUB_CLIENT_SECRET
+# wrangler secret put STRIPE_SECRET_KEY
+# wrangler secret put STRIPE_WEBHOOK_SECRET
+
+# Apply schema with:
+# wrangler d1 execute productivity-maxing-business-intelligence --file cloudflare/schema.sql

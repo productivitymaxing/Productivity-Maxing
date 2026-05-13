@@ -10,6 +10,7 @@
     "deploy": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "lucide-react": "^1.14.0",
     "next": "^14.0.0",
     "react": "^18.2.0",

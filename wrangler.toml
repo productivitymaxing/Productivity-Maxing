@@ -1,0 +1,8 @@
+name = "business-intelligence-max-api"
+main = "src/index.ts"
+compatibility_date = "2026-05-12"
+
+[[d1_databases]]
+binding = "productivity_maxing_db"
+database_name = "productivity-maxing-db"
+database_id = "0bcf058d-ad85-4d60-a6ef-0c203d8a7bf5"
