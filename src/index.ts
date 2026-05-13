@@ -71,8 +71,12 @@ const worker = {
       else if (url.pathname === "/api/auth/google/callback" && request.method === "GET") response = await handleGoogleCallback(request, env)
       else if (url.pathname === "/api/auth/github" && request.method === "GET") response = await handleGitHubAuth(request, env)
       else if (url.pathname === "/api/auth/github/callback" && request.method === "GET") response = await handleGitHubCallback(request, env)
+      else if (url.pathname === "/api/auth/verify-request" && request.method === "POST") response = await handleEmailVerifyRequest(request, env)
+      else if (url.pathname === "/api/auth/verify" && request.method === "GET") response = await handleEmailVerify(request, env)
       else if (url.pathname === "/api/auth/apple" && request.method === "GET") response = await handleAppleAuth(request, env)
       else if (url.pathname === "/api/auth/apple/callback" && request.method === "GET") response = await handleAppleCallback(request, env)
+      else if (url.pathname === "/api/auth/login" && request.method === "POST") response = await handleLogin(request, env)
+      else if (url.pathname === "/api/auth/session" && request.method === "GET") response = await handleSession(request, env)
       else if (url.pathname === "/api/profile" && request.method === "GET") response = await handleGetProfile(request, env)
       else if (url.pathname === "/api/profile" && request.method === "PUT") response = await handleUpdateProfile(request, env)
       else if (url.pathname === "/api/audits" && request.method === "GET") response = await handleListAudits(request, env)
@@ -110,6 +114,43 @@ async function handleLogin(request: Request, env: Env) {
 async function handleSession(request: Request, env: Env) {
   const user = await requireUser(request, env)
   return json({ user })
+}
+
+async function handleEmailVerifyRequest(request: Request, env: Env) {
+  if (!env.JWT_SECRET) return json({ error: "JWT_SECRET is not configured for Business Intelligence Max." }, 500)
+  const body = await request.json() as { email?: string; name?: string; redirectTo?: string }
+  const email = body.email?.trim().toLowerCase()
+  if (!email || !email.includes("@")) return json({ error: "A valid email is required." }, 400)
+
+  const token = await signEmailVerificationToken({ email, name: body.name, exp: Math.floor(Date.now() / 1000) + 60 * 15 }, env.JWT_SECRET)
+  const redirectTo = body.redirectTo || new URL(request.url).origin
+  const verificationUrl = `${new URL(request.url).origin}/api/auth/verify?token=${encodeURIComponent(token)}&redirect_to=${encodeURIComponent(redirectTo)}`
+
+  return json({ verificationUrl })
+}
+
+async function handleEmailVerify(request: Request, env: Env) {
+  if (!env.JWT_SECRET) return json({ error: "JWT_SECRET is not configured for Business Intelligence Max." }, 500)
+  const url = new URL(request.url)
+  const token = url.searchParams.get("token")
+  const redirectTo = url.searchParams.get("redirect_to") || url.origin
+  if (!token) return json({ error: "Verification token is required." }, 400)
+
+  let payload
+  try {
+    payload = await verifyEmailVerificationToken(token, env.JWT_SECRET)
+  } catch {
+    return json({ error: "Invalid or expired verification token." }, 400)
+  }
+
+  const user = await upsertUserByEmail(env, payload.email, payload.name)
+  const sessionToken = await signSessionToken({ sub: user.id, email: user.email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }, env.JWT_SECRET)
+  const frontendUrl = `${redirectTo}?token=${sessionToken}`
+
+  return new Response(null, {
+    status: 302,
+    headers: { Location: frontendUrl },
+  })
 }
 
 async function handleGoogleAuth(request: Request, env: Env) {
@@ -494,6 +535,30 @@ async function signSessionToken(payload: SessionPayload, secret: string) {
   const encodedPayload = base64UrlEncode(JSON.stringify(payload))
   const signature = await signHmac(`${encodedHeader}.${encodedPayload}`, secret)
   return `${encodedHeader}.${encodedPayload}.${signature}`
+}
+
+async function signEmailVerificationToken(payload: { email: string; name?: string; exp: number }, secret: string) {
+  const header = { alg: "HS256", typ: "JWT" }
+  const tokenPayload = { ...payload, type: "email_verification" }
+  const encodedHeader = base64UrlEncode(JSON.stringify(header))
+  const encodedPayload = base64UrlEncode(JSON.stringify(tokenPayload))
+  const signature = await signHmac(`${encodedHeader}.${encodedPayload}`, secret)
+  return `${encodedHeader}.${encodedPayload}.${signature}`
+}
+
+async function verifyEmailVerificationToken(token: string, secret: string): Promise<{ email: string; name?: string; exp: number }> {
+  const [encodedHeader, encodedPayload, signature] = token.split(".")
+  if (!encodedHeader || !encodedPayload || !signature) throw new Error("Unauthorized")
+  const expectedSignature = await signHmac(`${encodedHeader}.${encodedPayload}`, secret)
+  if (!timingSafeEqual(signature, expectedSignature)) throw new Error("Unauthorized")
+
+  const payload = JSON.parse(base64UrlDecode(encodedPayload)) as { email?: string; name?: string; exp?: number; type?: string }
+  const exp = payload.exp
+  if (!payload.email || !payload.email.includes("@") || payload.type !== "email_verification" || typeof exp !== "number" || exp < Math.floor(Date.now() / 1000)) {
+    throw new Error("Unauthorized")
+  }
+
+  return { email: payload.email, name: payload.name, exp }
 }
 
 async function verifySessionToken(token: string, secret: string): Promise<SessionPayload> {

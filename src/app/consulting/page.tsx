@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -109,6 +110,7 @@ function parseConversationMessages(messagesJson: string): ConversationMessage[] 
 }
 
 export default function ConsultingPage() {
+  const router = useRouter()
   const [showAuth, setShowAuth] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const [selectedPath, setSelectedPath] = useState<"business" | "personal" | undefined>(undefined)
@@ -125,7 +127,9 @@ export default function ConsultingPage() {
   const handleBusinessSelection = () => {
     setSelectedPath("business")
     setHasStarted(true)
-    if (!user) {
+    if (user) {
+      router.push("/consulting/dashboard")
+    } else {
       setShowAuth(true)
     }
   }
@@ -133,7 +137,7 @@ export default function ConsultingPage() {
   const handleAuthSuccess = async () => {
     await loadWorkspace()
     setShowAuth(false)
-    setHasStarted(true)
+    router.push("/consulting/dashboard")
   }
 
   const isConsultingReady = hasStarted && selectedPath === "business" && !!user
@@ -184,13 +188,15 @@ export default function ConsultingPage() {
       window.localStorage.setItem("business-intelligence-max-token", token)
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname)
-      // Load user session
-      loadWorkspace()
+      // Load user session and move to dashboard
+      loadWorkspace().then(() => {
+        router.push("/consulting/dashboard")
+      })
     } else {
       // Check if user is already authenticated
       loadWorkspace()
     }
-  }, [])
+  }, [router])
 
   const step = steps[currentStep]
   const completion = useMemo(() => Math.round(((currentStep + 1) / steps.length) * 100), [currentStep])
@@ -278,7 +284,6 @@ export default function ConsultingPage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-sky-100">Business Intelligence Max</div>
             <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl">Welcome to Business Intelligence Max</h1>
             <p className="text-xl leading-9 text-slate-200/90">Your Apt Business Operational Advisory.</p>
-            <p className="max-w-2xl text-base leading-8 text-slate-300/90">Choose the priority path for your business and sign in to unlock the official Productivity Maxing advisory experience.</p>
             <div className="grid gap-4 sm:max-w-lg sm:grid-cols-[1.15fr_0.85fr]">
               <button onClick={handleBusinessSelection} className="rounded-3xl bg-white/10 px-8 py-5 text-lg font-semibold text-white shadow-xl shadow-slate-950/20 ring-1 ring-white/20 transition hover:bg-white/15">Business</button>
               <button disabled className="rounded-3xl border border-white/15 bg-white/5 px-8 py-5 text-left text-lg font-semibold text-slate-200 opacity-80">
@@ -340,14 +345,26 @@ function AuditList({ title, items }: { title: string; items: string[] }) {
 function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () => void; onAuthenticated: () => Promise<void>; selectedPath?: "business" | "personal" }) {
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
+  const [mode, setMode] = useState<"signup" | "signin">("signup")
+  const [verificationLink, setVerificationLink] = useState("")
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [providerMessage, setProviderMessage] = useState("")
 
-  const signIn = async () => {
+  const handleEmailAction = async () => {
     try {
       setIsSigningIn(true)
       setErrorMessage("")
+      setProviderMessage("")
+      setVerificationLink("")
+
+      if (mode === "signup") {
+        const result = await businessIntelligenceApi.requestEmailVerification(email, name, window.location.origin)
+        setVerificationLink(result.verificationUrl)
+        setProviderMessage("A verification link has been generated. Click it to verify your email.")
+        return
+      }
+
       await businessIntelligenceApi.login(email, name)
       await onAuthenticated()
       onClose()
@@ -406,21 +423,35 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
         </div>
 
         <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Official Productivity Maxing access</p>
-              <h3 className="mt-2 text-2xl font-semibold text-white">Email sign in</h3>
+              <h3 className="mt-2 text-2xl font-semibold text-white">Email {mode === "signup" ? "sign up" : "sign in"}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-400">Use email sign up to create your account, then verify it before accessing Business Intelligence Max.</p>
             </div>
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-300">{selectedPath === "business" ? "Business" : "Personal"}</span>
+            <button type="button" onClick={() => setMode(mode === "signup" ? "signin" : "signup")} className="inline-flex items-center justify-center rounded-3xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800">
+              {mode === "signup" ? "Already have an account? Sign in" : "New here? Sign up"}
+            </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <input value={name} onChange={event => setName(event.target.value)} placeholder="Full name" className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            {mode === "signup" && (
+              <input value={name} onChange={event => setName(event.target.value)} placeholder="Full name" className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            )}
             <input value={email} onChange={event => setEmail(event.target.value)} placeholder="Email address" className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
           </div>
           {errorMessage && <p className="mt-4 rounded-3xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{errorMessage}</p>}
           {providerMessage && <p className="mt-4 rounded-3xl border border-slate-600 bg-slate-900/90 p-4 text-sm text-slate-300">{providerMessage}</p>}
-          <button disabled={isSigningIn || !email.trim()} onClick={signIn} className="mt-6 w-full rounded-3xl bg-sky-500 px-6 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60">{isSigningIn ? "Signing in..." : "Continue with email"}</button>
-          <p className="mt-4 text-sm leading-6 text-slate-400">You can sign up or sign in with any verified email address. Your session is protected by Cloudflare Worker token authentication.</p>
+          {verificationLink && (
+            <div className="mt-4 rounded-3xl border border-slate-700 bg-slate-900/90 p-4 text-sm text-slate-200">
+              <p className="font-semibold text-slate-100">Email verification ready</p>
+              <p className="mt-2 text-slate-300">Use the link below to verify your account and continue to Business Intelligence Max.</p>
+              <a href={verificationLink} className="mt-3 inline-flex rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400">Verify email</a>
+            </div>
+          )}
+          <button disabled={isSigningIn || !email.trim()} onClick={handleEmailAction} className="mt-6 w-full rounded-3xl bg-sky-500 px-6 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60">
+            {isSigningIn ? (mode === "signup" ? "Sending verification..." : "Signing in...") : (mode === "signup" ? "Continue with email" : "Sign in with email")}
+          </button>
+          <p className="mt-4 text-sm leading-6 text-slate-400">Your session is protected by Cloudflare Worker token authentication. We will verify your email before unlocking Business Intelligence Max.</p>
         </div>
       </div>
     </div>

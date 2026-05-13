@@ -128,6 +128,9 @@ export const businessIntelligenceApi = {
     setSessionToken(result.token)
     return result
   },
+  async requestEmailVerification(email: string, name?: string, redirectTo?: string) {
+    return request<{ verificationUrl: string }>("/api/auth/verify-request", { method: "POST", body: JSON.stringify({ email, name, redirectTo }) })
+  },
   logout() {
     clearSessionToken()
   },
