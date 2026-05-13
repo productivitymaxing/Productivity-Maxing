@@ -56,6 +56,8 @@ const creditCosts: Record<string, number> = {
   strategic_plan: 6,
 }
 
+const apiBaseUrl = "https://api.productivitymaxing.com"
+
 const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (!isAllowedOrigin(request)) return new Response("Forbidden origin", { status: 403 })
@@ -158,7 +160,7 @@ async function handleGoogleAuth(request: Request, env: Env) {
   const url = new URL(request.url)
   const redirectTo = url.searchParams.get("redirect_to") || url.origin
   const state = encodeURIComponent(JSON.stringify({ redirect_to: redirectTo }))
-  const redirectUri = `${url.origin}/api/auth/google/callback`
+  const redirectUri = `${apiBaseUrl}/api/auth/google/callback`
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -200,13 +202,14 @@ async function handleGoogleCallback(request: Request, env: Env) {
         client_secret: env.GOOGLE_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
-        redirect_uri: `${url.origin}/api/auth/google/callback`,
+        redirect_uri: `${apiBaseUrl}/api/auth/google/callback`,
       }),
     })
 
-    const tokenData = await tokenResponse.json() as { access_token?: string; error?: string }
+    const tokenData = await tokenResponse.json() as { access_token?: string; error?: string; error_description?: string }
     if (!tokenResponse.ok || !tokenData.access_token) {
-      return json({ error: tokenData.error || "Failed to exchange authorization code." }, 400)
+      const errorMsg = tokenData.error_description || tokenData.error || "Failed to exchange authorization code."
+      return json({ error: `Google token exchange failed: ${errorMsg}` }, 400)
     }
 
     // Get user info
@@ -230,7 +233,8 @@ async function handleGoogleCallback(request: Request, env: Env) {
       headers: { Location: frontendUrl },
     })
   } catch (error) {
-    return json({ error: "OAuth authentication failed." }, 500)
+    const errorMsg = error instanceof Error ? error.message : "Unknown error"
+    return json({ error: `Google OAuth failed: ${errorMsg}` }, 500)
   }
 }
 
@@ -239,7 +243,7 @@ async function handleGitHubAuth(request: Request, env: Env) {
   const url = new URL(request.url)
   const redirectTo = url.searchParams.get("redirect_to") || url.origin
   const state = encodeURIComponent(JSON.stringify({ redirect_to: redirectTo }))
-  const redirectUri = `${url.origin}/api/auth/github/callback`
+  const redirectUri = `${apiBaseUrl}/api/auth/github/callback`
   const authUrl = `https://github.com/login/oauth/authorize?${new URLSearchParams({
     client_id: env.GITHUB_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -282,7 +286,7 @@ async function handleGitHubCallback(request: Request, env: Env) {
         client_id: env.GITHUB_CLIENT_ID,
         client_secret: env.GITHUB_CLIENT_SECRET,
         code,
-        redirect_uri: `${url.origin}/api/auth/github/callback`,
+        redirect_uri: `${apiBaseUrl}/api/auth/github/callback`,
       }),
     })
 

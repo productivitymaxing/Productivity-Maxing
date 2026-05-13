@@ -44,7 +44,10 @@ export type ConversationRecord = {
   updated_at?: string
 }
 
-const workerUrl = process.env.NEXT_PUBLIC_WORKER_URL ?? "https://business-intelligence-max-api.evangelmarfo.workers.dev"
+const envWorkerUrl = process.env.NEXT_PUBLIC_WORKER_URL?.trim()
+const workerUrl = typeof window !== "undefined"
+  ? envWorkerUrl || window.location.origin
+  : envWorkerUrl || ""
 const tokenKey = "business-intelligence-max-token"
 
 function getSessionToken() {
