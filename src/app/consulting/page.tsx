@@ -12,10 +12,8 @@ import {
   CreditCard,
   FileText,
   Gauge,
-  Globe,
   History,
   Lock,
-  Mail,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -271,9 +269,9 @@ export default function ConsultingPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(0,103,255,0.85),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(0,36,148,0.95),transparent_20%),linear-gradient(180deg,rgba(3,11,72,0.95),rgba(6,27,133,0.9))]" />
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,103,255,0.85),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(0,36,148,0.95),transparent_20%),linear-gradient(180deg,rgba(3,11,72,0.95),rgba(6,27,133,0.9))]" />
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/90 to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-6">
@@ -363,12 +361,13 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
   const handleProviderClick = (provider: string) => {
     const providerRoutes = {
       Google: "/api/auth/google",
-      GitHub: "/api/auth/github", 
-      Apple: "/api/auth/apple"
+      GitHub: "/api/auth/github",
+      Apple: "/api/auth/apple",
     }
     const route = providerRoutes[provider as keyof typeof providerRoutes]
     if (route) {
-      window.location.href = `${workerUrl}${route}`
+      const redirectTo = encodeURIComponent(window.location.origin)
+      window.location.href = `${workerUrl}${route}?redirect_to=${redirectTo}`
     } else {
       setProviderMessage(`${provider} sign in is not configured yet. Use secure email access to continue today.`)
     }
@@ -387,8 +386,25 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <button type="button" onClick={() => handleProviderClick("Google")} className="flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-700 bg-slate-900/80 px-5 py-4 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800"><Globe size={18} /> Continue with Google</button>
-          <button type="button" onClick={() => handleProviderClick("GitHub")} className="flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-700 bg-slate-900/80 px-5 py-4 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800"><Mail size={18} /> Continue with GitHub</button>
+          <button type="button" onClick={() => handleProviderClick("Google")} className="flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-700 bg-slate-900/80 px-5 py-4 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white">
+              <svg viewBox="0 0 18 18" className="h-4 w-4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 7.5H18V10.5H9V15.75L6.75 12.75C5.15625 11.0625 3.75 9.5625 3.75 7.5C3.75 5.25 5.25 3.75 7.5 3.75C8.625 3.75 9.5625 4.1875 10.125 4.875L12.75 2.25C11.25 0.75 9.375 0 7.5 0C3.375 0 0 3.375 0 7.5C0 11.625 3.375 15 7.5 15C9.9375 15 11.9062 14.0625 13.3125 12.75L16.5 15.9375V15.75C17.8125 13.875 18.5625 11.625 18.5625 9.1875C18.5625 8.625 18.5625 8.25 18.5625 7.6875H9V7.5Z" fill="#4285F4"/>
+                <path d="M0 0L9 7.5V15.75C5.15625 15.75 1.6875 13.5 0 10.125V7.5Z" fill="#34A853"/>
+                <path d="M18 0H9V7.5H18C18 5.625 17.1562 3.9375 15.75 2.625L13.3125 4.875C14.0625 5.625 14.4375 6.5625 14.4375 7.5H18V0Z" fill="#FBBC05"/>
+                <path d="M0 7.5V10.125C0 9.375 0.1875 8.625 0.5625 7.875L0 7.5Z" fill="#EA4335"/>
+              </svg>
+            </span>
+            Continue with Google
+          </button>
+          <button type="button" onClick={() => handleProviderClick("GitHub")} className="flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-700 bg-slate-900/80 px-5 py-4 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-950">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0.297c-6.627 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.387.6.111.82-.261.82-.577 0-.285-.011-1.04-.017-2.04-3.338.724-4.042-1.611-4.042-1.611-.546-1.387-1.333-1.756-1.333-1.756-1.089-.744.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.834 2.809 1.304 3.495.997.108-.775.418-1.304.762-1.604-2.665-.305-5.467-1.332-5.467-5.931 0-1.31.468-2.381 1.235-3.221-.123-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.046.138 3.006.404 2.289-1.552 3.296-1.23 3.296-1.23.653 1.653.242 2.874.119 3.176.77.84 1.233 1.911 1.233 3.221 0 4.61-2.807 5.624-5.479 5.921.43.372.814 1.103.814 2.222 0 1.606-.015 2.902-.015 3.293 0 .319.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+              </svg>
+            </span>
+            Continue with GitHub
+          </button>
           <button type="button" onClick={() => handleProviderClick("Apple")} className="flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-700 bg-slate-900/80 px-5 py-4 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800"><Apple size={18} /> Continue with Apple</button>
         </div>
 

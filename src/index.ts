@@ -114,8 +114,10 @@ async function handleSession(request: Request, env: Env) {
 
 async function handleGoogleAuth(request: Request, env: Env) {
   if (!env.GOOGLE_CLIENT_ID) return json({ error: "Google OAuth is not configured." }, 500)
-  const state = crypto.randomUUID()
-  const redirectUri = `${new URL(request.url).origin}/api/auth/google/callback`
+  const url = new URL(request.url)
+  const redirectTo = url.searchParams.get("redirect_to") || url.origin
+  const state = encodeURIComponent(JSON.stringify({ redirect_to: redirectTo }))
+  const redirectUri = `${url.origin}/api/auth/google/callback`
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -136,6 +138,16 @@ async function handleGoogleCallback(request: Request, env: Env) {
   const code = url.searchParams.get("code")
   const state = url.searchParams.get("state")
   if (!code) return json({ error: "Authorization code is required." }, 400)
+
+  const redirectTo = (() => {
+    if (!state) return url.origin
+    try {
+      const parsed = JSON.parse(decodeURIComponent(state)) as { redirect_to?: string }
+      return parsed.redirect_to || url.origin
+    } catch {
+      return url.origin
+    }
+  })()
 
   try {
     // Exchange code for access token
@@ -171,7 +183,7 @@ async function handleGoogleCallback(request: Request, env: Env) {
     const token = await signSessionToken({ sub: user.id, email: user.email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }, env.JWT_SECRET!)
 
     // Redirect to frontend with token
-    const frontendUrl = `${url.origin}?token=${token}`
+    const frontendUrl = `${redirectTo}?token=${token}`
     return new Response(null, {
       status: 302,
       headers: { Location: frontendUrl },
@@ -183,8 +195,10 @@ async function handleGoogleCallback(request: Request, env: Env) {
 
 async function handleGitHubAuth(request: Request, env: Env) {
   if (!env.GITHUB_CLIENT_ID) return json({ error: "GitHub OAuth is not configured." }, 500)
-  const state = crypto.randomUUID()
-  const redirectUri = `${new URL(request.url).origin}/api/auth/github/callback`
+  const url = new URL(request.url)
+  const redirectTo = url.searchParams.get("redirect_to") || url.origin
+  const state = encodeURIComponent(JSON.stringify({ redirect_to: redirectTo }))
+  const redirectUri = `${url.origin}/api/auth/github/callback`
   const authUrl = `https://github.com/login/oauth/authorize?${new URLSearchParams({
     client_id: env.GITHUB_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -204,6 +218,16 @@ async function handleGitHubCallback(request: Request, env: Env) {
   const code = url.searchParams.get("code")
   const state = url.searchParams.get("state")
   if (!code) return json({ error: "Authorization code is required." }, 400)
+
+  const redirectTo = (() => {
+    if (!state) return url.origin
+    try {
+      const parsed = JSON.parse(decodeURIComponent(state)) as { redirect_to?: string }
+      return parsed.redirect_to || url.origin
+    } catch {
+      return url.origin
+    }
+  })()
 
   try {
     // Exchange code for access token
@@ -262,7 +286,7 @@ async function handleGitHubCallback(request: Request, env: Env) {
     const token = await signSessionToken({ sub: user.id, email: user.email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }, env.JWT_SECRET!)
 
     // Redirect to frontend with token
-    const frontendUrl = `${url.origin}?token=${token}`
+    const frontendUrl = `${redirectTo}?token=${token}`
     return new Response(null, {
       status: 302,
       headers: { Location: frontendUrl },
