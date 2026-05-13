@@ -273,7 +273,7 @@ export default function ConsultingPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.28),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.12),transparent_20%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,103,255,0.85),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(0,36,148,0.95),transparent_20%),linear-gradient(180deg,rgba(3,11,72,0.95),rgba(6,27,133,0.9))]" />
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/90 to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-6">
