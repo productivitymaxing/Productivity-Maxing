@@ -9,6 +9,10 @@ export interface Env {
   GOOGLE_CLIENT_SECRET?: string
   GITHUB_CLIENT_ID?: string
   GITHUB_CLIENT_SECRET?: string
+  APPLE_CLIENT_ID?: string
+  APPLE_TEAM_ID?: string
+  APPLE_KEY_ID?: string
+  APPLE_PRIVATE_KEY?: string
   STRIPE_SECRET_KEY?: string
   STRIPE_WEBHOOK_SECRET?: string
 }
@@ -76,7 +80,7 @@ const worker = {
       else if (url.pathname === "/api/auth/verify-request" && request.method === "POST") response = await handleEmailVerifyRequest(request, env)
       else if (url.pathname === "/api/auth/verify" && request.method === "GET") response = await handleEmailVerify(request, env)
       else if (url.pathname === "/api/auth/apple" && request.method === "GET") response = await handleAppleAuth(request, env)
-      else if (url.pathname === "/api/auth/apple/callback" && request.method === "GET") response = await handleAppleCallback(request, env)
+      else if (url.pathname === "/api/auth/apple/callback" && (request.method === "POST" || request.method === "GET")) response = await handleAppleCallback(request, env)
       else if (url.pathname === "/api/auth/login" && request.method === "POST") response = await handleLogin(request, env)
       else if (url.pathname === "/api/auth/session" && request.method === "GET") response = await handleSession(request, env)
       else if (url.pathname === "/api/profile" && request.method === "GET") response = await handleGetProfile(request, env)
@@ -342,13 +346,153 @@ async function handleGitHubCallback(request: Request, env: Env) {
 }
 
 async function handleAppleAuth(request: Request, env: Env) {
-  // Apple Sign-In is more complex and typically requires a frontend implementation
-  // For now, we'll return an error indicating it's not implemented
-  return json({ error: "Apple Sign-In is not yet implemented. Please use email, Google, or GitHub authentication." }, 501)
+  if (!env.APPLE_CLIENT_ID) return json({ error: "Apple OAuth is not configured." }, 500)
+  
+  const url = new URL(request.url)
+  const redirectTo = url.searchParams.get("redirect_to") || url.origin
+  const state = encodeURIComponent(JSON.stringify({ redirect_to: redirectTo }))
+  const redirectUri = `${apiBaseUrl}/api/auth/apple/callback`
+  
+  const authUrl = `https://appleid.apple.com/auth/authorize?${new URLSearchParams({
+    client_id: env.APPLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "name email",
+    response_mode: "form_post",
+    state,
+  })}`
+  
+  return new Response(null, {
+    status: 302,
+    headers: { Location: authUrl },
+  })
 }
 
 async function handleAppleCallback(request: Request, env: Env) {
-  return json({ error: "Apple Sign-In is not yet implemented." }, 501)
+  if (!env.APPLE_CLIENT_ID || !env.APPLE_TEAM_ID || !env.APPLE_KEY_ID || !env.APPLE_PRIVATE_KEY || !env.JWT_SECRET) {
+    return json({ error: "Apple OAuth is not fully configured." }, 500)
+  }
+
+  const url = new URL(request.url)
+  let code: string | null = null
+  let state: string | null = null
+  let user_data: any = null
+
+  if (request.method === "POST") {
+    const formData = await request.formData()
+    code = formData.get("code") as string
+    state = formData.get("state") as string
+    const userJson = formData.get("user") as string
+    if (userJson) {
+      try {
+        user_data = JSON.parse(userJson)
+      } catch {}
+    }
+  } else {
+    code = url.searchParams.get("code")
+    state = url.searchParams.get("state")
+  }
+
+  if (!code) return json({ error: "Authorization code is required." }, 400)
+
+  const redirectTo = (() => {
+    if (!state) return url.origin
+    try {
+      const parsed = JSON.parse(decodeURIComponent(state)) as { redirect_to?: string }
+      return parsed.redirect_to || url.origin
+    } catch {
+      return url.origin
+    }
+  })()
+
+  try {
+    // 1. Generate client_secret (JWT)
+    const clientSecret = await generateAppleClientSecret(env)
+
+    // 2. Exchange code for tokens
+    const tokenResponse = await fetch("https://appleid.apple.com/auth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: env.APPLE_CLIENT_ID,
+        client_secret: clientSecret,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: `${apiBaseUrl}/api/auth/apple/callback`,
+      }),
+    })
+
+    const tokenData = await tokenResponse.json() as { id_token?: string; error?: string; error_description?: string }
+    if (!tokenResponse.ok || !tokenData.id_token) {
+      const errorMsg = tokenData.error_description || tokenData.error || "Failed to exchange authorization code."
+      return json({ error: `Apple token exchange failed: ${errorMsg}` }, 400)
+    }
+
+    // 3. Decode id_token to get email (no verification for now, or minimal)
+    const idTokenParts = tokenData.id_token.split(".")
+    if (idTokenParts.length !== 3) return json({ error: "Invalid id_token from Apple." }, 400)
+    const payload = JSON.parse(base64UrlDecode(idTokenParts[1])) as { email?: string; sub: string }
+    
+    if (!payload.email) return json({ error: "Email not provided by Apple." }, 400)
+
+    // 4. Create/update user
+    const name = user_data?.name ? `${user_data.name.firstName} ${user_data.name.lastName}`.trim() : payload.email.split("@")[0]
+    const user = await upsertUserByEmail(env, payload.email, name)
+    const token = await signSessionToken({ sub: user.id, email: user.email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }, env.JWT_SECRET)
+
+    // 5. Redirect back to frontend
+    const frontendUrl = `${redirectTo}?token=${token}`
+    return new Response(null, {
+      status: 302,
+      headers: { Location: frontendUrl },
+    })
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown error"
+    return json({ error: `Apple OAuth failed: ${errorMsg}` }, 500)
+  }
+}
+
+async function generateAppleClientSecret(env: Env) {
+  const header = { alg: "ES256", kid: env.APPLE_KEY_ID }
+  const now = Math.floor(Date.now() / 1000)
+  const payload = {
+    iss: env.APPLE_TEAM_ID,
+    iat: now,
+    exp: now + 3600, // 1 hour
+    aud: "https://appleid.apple.com",
+    sub: env.APPLE_CLIENT_ID,
+  }
+
+  const encodedHeader = base64UrlEncode(JSON.stringify(header))
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
+  const unsignedToken = `${encodedHeader}.${encodedPayload}`
+  
+  const signature = await signAppleP8(unsignedToken, env.APPLE_PRIVATE_KEY!)
+  return `${unsignedToken}.${signature}`
+}
+
+async function signAppleP8(input: string, privateKeyP8: string) {
+  // Extract the base64 part of the P8 key
+  const pemHeader = "-----BEGIN PRIVATE KEY-----"
+  const pemFooter = "-----END PRIVATE KEY-----"
+  const pemContents = privateKeyP8.replace(pemHeader, "").replace(pemFooter, "").replace(/\s/g, "")
+  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0))
+
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    binaryKey,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"]
+  )
+
+  const signature = await crypto.subtle.sign(
+    { name: "ECDSA", hash: { name: "SHA-256" } },
+    key,
+    new TextEncoder().encode(input)
+  )
+
+  return base64UrlEncodeBytes(new Uint8Array(signature))
 }
 
 async function handleGetProfile(request: Request, env: Env) {
@@ -373,37 +517,42 @@ async function handleListAudits(request: Request, env: Env) {
 }
 
 async function handleCreateAudit(request: Request, env: Env) {
-  // 1. Try to get the user, but don't crash if they are a guest
   const user = await requireUser(request, env).catch(() => null);
+  const body = await request.json() as { form: DiagnosticForm };
+  
+  if (!body.form) return json({ error: "Diagnostic form is required." }, 400);
 
-  // 2. Parse the audit data sent from the frontend
-  const auditData = await request.json();
+  const audit = await generateAudit(body.form, env);
 
-  // 3. LOGIC: If no user, just return the data (Guest Mode)
   if (!user) {
-    return new Response(JSON.stringify({ 
+    return json({ 
       success: true, 
       isGuest: true,
-      message: "Free audit generated successfully.",
-      audit: auditData 
-    }), {
-      headers: { 
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*" // Keeps CORS happy
-      }
+      message: "Free audit generated successfully. Sign in to save your results.",
+      audit 
     });
   }
 
-  // 4. LOGIC: If user exists, save to the D1 Database (Institutional Mode)
-  const { success } = await env.DB.prepare(
-    "INSERT INTO ai_conversations (user_id, message, response) VALUES (?, ?, ?)"
+  const auditId = crypto.randomUUID();
+  await env.productivity_maxing_db.prepare(
+    "INSERT INTO audits (id, user_id, form_json, score, bottlenecks_json, constraints_json, recommendations_json, roadmap_json, summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
   )
-  .bind(user.id, "New Audit Request", JSON.stringify(auditData))
+  .bind(
+    auditId, 
+    user.id, 
+    JSON.stringify(body.form), 
+    audit.score, 
+    JSON.stringify(audit.bottlenecks), 
+    JSON.stringify(audit.constraints), 
+    JSON.stringify(audit.recommendations), 
+    JSON.stringify(audit.roadmap), 
+    audit.summary
+  )
   .run();
 
-  return new Response(JSON.stringify({ success, isGuest: false, audit: auditData }), {
-    headers: { "Content-Type": "application/json" }
-  });
+  await logUsage(env, user.id, "audit.created", { auditId, score: audit.score });
+
+  return json({ success: true, isGuest: false, audit: { ...audit, id: auditId } });
 }
 
 async function handleSpendCredits(request: Request, env: Env) {
@@ -617,19 +766,74 @@ function parseStoredMessages(messagesJson: string): ConversationMessage[] {
   }
 }
 
-function generateAudit(form: DiagnosticForm): Audit {
+async function generateAudit(form: DiagnosticForm, env: Env): Promise<Audit> {
   const flat = Object.values(form).flatMap(section => Object.values(section))
   const completed = flat.filter(Boolean).length
   const signal = flat.join(" ").toLowerCase()
   const penalties = ["manual", "overwhelm", "unpredictable", "none", "poor", "scattered", "critical", "excessive"].reduce((sum, word) => sum + (signal.includes(word) ? 7 : 0), 0)
   const score = Math.max(31, Math.min(92, 38 + completed * 2 - penalties + (signal.includes("automated") ? 10 : 0)))
-  return {
-    score,
-    bottlenecks: ["Founder-dependent execution is limiting throughput.", "Workflow visibility is not yet strong enough for predictable scale.", "KPI reporting requires tighter operating cadence."],
-    constraints: ["Manual coordination creates hidden time leakage.", "Client delivery and internal accountability are not fully systemized.", "Growth channels are vulnerable without a repeatable operating rhythm."],
-    recommendations: ["Install a weekly executive operating dashboard with lead, delivery, finance and capacity metrics.", "Convert recurring delivery work into documented SOPs with ownership rules.", "Build a founder leverage system: delegation map, decision rules and escalation paths.", "Create a revenue operations tracker for leads, pipeline velocity and follow-up SLA."],
-    roadmap: ["Week 1: Map bottlenecks, owner responsibilities and critical KPIs.", "Week 2: Build the operating dashboard and weekly review cadence.", "Week 3: Document top 5 recurring workflows as SOPs.", "Week 4: Deploy delegation, tracker and accountability system."],
-    summary: "Your business has enough operational signal to improve quickly, but scaling will require a stronger management system: clearer metrics, fewer manual handoffs, documented delivery, and a tighter executive review cadence.",
+
+  if (!env.GEMINI_API_KEY) {
+    return {
+      score,
+      bottlenecks: ["Founder-dependent execution is limiting throughput.", "Workflow visibility is not yet strong enough for predictable scale.", "KPI reporting requires tighter operating cadence."],
+      constraints: ["Manual coordination creates hidden time leakage.", "Client delivery and internal accountability are not fully systemized.", "Growth channels are vulnerable without a repeatable operating rhythm."],
+      recommendations: ["Install a weekly executive operating dashboard with lead, delivery, finance and capacity metrics.", "Convert recurring delivery work into documented SOPs with ownership rules.", "Build a founder leverage system: delegation map, decision rules and escalation paths.", "Create a revenue operations tracker for leads, pipeline velocity and follow-up SLA."],
+      roadmap: ["Week 1: Map bottlenecks, owner responsibilities and critical KPIs.", "Week 2: Build the operating dashboard and weekly review cadence.", "Week 3: Document top 5 recurring workflows as SOPs.", "Week 4: Deploy delegation, tracker and accountability system."],
+      summary: "Your business has enough operational signal to improve quickly, but scaling will require a stronger management system: clearer metrics, fewer manual handoffs, documented delivery, and a tighter executive review cadence.",
+    }
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
+    const model = genAI.getGenerativeModel({
+      model: "gemini-3-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    })
+
+    const prompt = `
+      You are the Elite Performance Engineer for Productivity Maxing.
+      Diagnose the following business based on their diagnostic form data:
+      ${JSON.stringify(form, null, 2)}
+
+      Your task is to provide a detailed operational audit.
+      The operational score has already been calculated as ${score}/100.
+      
+      Respond ONLY with a JSON object in the following format:
+      {
+        "bottlenecks": ["string", "string", "string"],
+        "constraints": ["string", "string", "string"],
+        "recommendations": ["string", "string", "string", "string"],
+        "roadmap": ["Week 1: ...", "Week 2: ...", "Week 3: ...", "Week 4: ..."],
+        "summary": "Detailed executive summary string"
+      }
+
+      Focus on friction mapping, revenue at risk, and actionable implementation.
+    `
+
+    const result = await model.generateContent(prompt)
+    const responseText = result.response.text()
+    const aiAudit = JSON.parse(responseText)
+
+    return {
+      score,
+      bottlenecks: Array.isArray(aiAudit.bottlenecks) ? aiAudit.bottlenecks : [],
+      constraints: Array.isArray(aiAudit.constraints) ? aiAudit.constraints : [],
+      recommendations: Array.isArray(aiAudit.recommendations) ? aiAudit.recommendations : [],
+      roadmap: Array.isArray(aiAudit.roadmap) ? aiAudit.roadmap : [],
+      summary: typeof aiAudit.summary === "string" ? aiAudit.summary : "",
+    }
+  } catch (error) {
+    console.error("Gemini audit generation failed:", error)
+    // Fallback to static if AI fails
+    return {
+      score,
+      bottlenecks: ["Founder-dependent execution is limiting throughput."],
+      constraints: ["Manual coordination creates hidden time leakage."],
+      recommendations: ["Install a weekly executive operating dashboard."],
+      roadmap: ["Week 1: Map bottlenecks and critical KPIs."],
+      summary: "Audit generated with fallback logic due to intelligence service interruption.",
+    }
   }
 }
 

@@ -2,6 +2,14 @@ name = "business-intelligence-max-api"
 main = "src/index.ts"
 compatibility_date = "2026-05-12"
 
+# Added this section for your variables
+[vars]
+JWT_SECRET = "AUTH_SECRET"
+
+[[routes]]
+pattern = "api.productivitymaxing.com"
+custom_domain = true
+
 [[d1_databases]]
 binding = "productivity_maxing_db"
 database_name = "productivity-maxing-db"
