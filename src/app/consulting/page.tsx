@@ -112,23 +112,13 @@ function parseConversationMessages(messagesJson: string): ConversationMessage[] 
 export default function ConsultingPage() {
   const router = useRouter()
   const [showAuth, setShowAuth] = useState(false)
-  const [hasStarted, setHasStarted] = useState(false)
   const [selectedPath, setSelectedPath] = useState<"business" | "personal" | undefined>(undefined)
-  const [currentStep, setCurrentStep] = useState(0)
-  const [form, setForm] = useState<DiagnosticForm>(initialForm)
-  const [audit, setAudit] = useState<Audit | null>(null)
-  const [tier, setTier] = useState<Tier>("Free")
-  const [credits, setCredits] = useState(15)
   const [user, setUser] = useState<BusinessIntelligenceUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [statusMessage, setStatusMessage] = useState("Connecting to institutional business memory...")
 
   const handleBusinessSelection = () => {
     setSelectedPath("business")
-    setHasStarted(true)
     if (user) {
-      router.push("/consulting/dashboard")
+      router.push("/consulting/portal")
     } else {
       setShowAuth(true)
     }
@@ -137,46 +127,28 @@ export default function ConsultingPage() {
   const handleAuthSuccess = async () => {
     await loadWorkspace()
     setShowAuth(false)
-    router.push("/consulting/dashboard")
   }
-
-  const isConsultingReady = hasStarted && selectedPath === "business" && !!user
-  const [errorMessage, setErrorMessage] = useState("")
-  const [conversationId, setConversationId] = useState<string>()
-  const [messages, setMessages] = useState<ConversationMessage[]>([
-    { role: "assistant", content: "Sign in to activate protected Business Intelligence Max memory. Once authenticated, every consulting exchange is saved to Cloudflare D1 under your verified email.", createdAt: new Date().toISOString() },
-  ])
-  const [terminalInput, setTerminalInput] = useState("")
-  const [isSavingConversation, setIsSavingConversation] = useState(false)
 
   const loadWorkspace = async () => {
     try {
-      setIsLoading(true)
-      setErrorMessage("")
-      const [session, auditHistory, conversationHistory] = await Promise.all([
+      const [session, auditHistory] = await Promise.all([
         businessIntelligenceApi.session(),
         businessIntelligenceApi.listAudits(),
-        businessIntelligenceApi.listConversations(),
       ])
       setUser(session.user)
-      setTier(session.user.subscription_tier)
-      setCredits(session.user.credits_balance)
+      
       const latestAudit = auditHistory.audits[0]
-      if (latestAudit) setAudit(normalizeAudit(latestAudit))
-      const latestConversation = conversationHistory.conversations[0]
-      if (latestConversation) {
-        setConversationId(latestConversation.id)
-        setMessages(parseConversationMessages(latestConversation.messages_json))
-      } else {
-        setConversationId(undefined)
-        setMessages([{ role: "assistant", content: `Secure consulting terminal active for ${session.user.email}. Ask about bottlenecks, systems, delegation, KPIs, revenue operations, or execution cadence.`, createdAt: new Date().toISOString() }])
+      if (latestAudit) {
+        router.push("/consulting/dashboard")
+        return true
       }
-      setStatusMessage(`Cloudflare business memory connected for ${session.user.email}.`)
+      
+      // Authenticated but no audit: redirect to portal
+      router.push("/consulting/portal")
+      return true
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Sign in to connect your protected Business Intelligence Max memory.")
-      setStatusMessage("Business Intelligence Max is waiting for authenticated business context.")
-    } finally {
-      setIsLoading(false)
+      // User is not authenticated
+      return false
     }
   }
 
@@ -188,151 +160,30 @@ export default function ConsultingPage() {
       window.localStorage.setItem("business-intelligence-max-token", token)
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname)
-      // Load user session and move to dashboard
-      loadWorkspace().then(() => {
-        router.push("/consulting/dashboard")
-      })
+      // Load user session
+      loadWorkspace()
     } else {
       // Check if user is already authenticated
       loadWorkspace()
     }
   }, [router])
 
-  const step = steps[currentStep]
-  const completion = useMemo(() => Math.round(((currentStep + 1) / steps.length) * 100), [currentStep])
-  const isStepComplete = step.fields.every(field => form[step.key][field.name]?.trim())
-
-  const updateField = (name: string, value: string) => {
-    setForm(prev => ({ ...prev, [step.key]: { ...prev[step.key], [name]: value } }))
-  }
-
-  const submitAudit = async () => {
-    try {
-      setIsGenerating(true)
-      setErrorMessage("")
-      setStatusMessage("Running institutional operating diagnosis...")
-      const result = await businessIntelligenceApi.createAudit(form)
-      setAudit(normalizeAudit(result.audit))
-      setStatusMessage("Free audit generated and stored in Cloudflare D1.")
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Audit generation failed. Please try again.")
-      setStatusMessage("Business Intelligence Max could not complete the diagnostic request.")
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const spendCredits = async (action: string, amount: number) => {
-    if (tier === "Free" || credits < amount) return
-    try {
-      setIsGenerating(true)
-      setErrorMessage("")
-      setStatusMessage("Authorizing credit-backed generation...")
-      const result = await businessIntelligenceApi.spendCredits(action, audit?.id)
-      setCredits(result.creditsBalance)
-      setStatusMessage("Generation completed and credit ledger updated.")
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Credit-backed generation failed.")
-      setStatusMessage("Credit transaction was not completed.")
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const sendTerminalMessage = async () => {
-    const content = terminalInput.trim()
-    if (!content) return
-    if (!user) {
-      setShowAuth(true)
-      setErrorMessage("Sign in before using the protected consulting terminal.")
-      return
-    }
-
-    const now = new Date().toISOString()
-    const userMessage: ConversationMessage = { role: "user", content, createdAt: now }
-    const pendingMessages = [...messages, userMessage]
-    const title = pendingMessages.find(message => message.role === "user")?.content.slice(0, 80) || "Consulting terminal session"
-
-    try {
-      setTerminalInput("")
-      setMessages(pendingMessages)
-      setIsSavingConversation(true)
-      setErrorMessage("")
-      setStatusMessage("Gemini 3 Flash is mapping friction and revenue at risk...")
-      const aiResult = await businessIntelligenceApi.generateReply({ conversationId, message: content, audit })
-      const assistantMessage: ConversationMessage = { role: "assistant", content: aiResult.reply, createdAt: new Date().toISOString() }
-      const nextMessages = [...pendingMessages, assistantMessage]
-      setMessages(nextMessages)
-      const result = await businessIntelligenceApi.saveConversation({ id: conversationId, title, messages: nextMessages })
-      setConversationId(result.conversation.id)
-      setStatusMessage(`Conversation history saved under ${result.userEmail}.`)
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Unable to save consulting conversation.")
-      setStatusMessage("Consulting response generated, but database save did not complete.")
-    } finally {
-      setIsSavingConversation(false)
-    }
-  }
-
   return (
-    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(0,103,255,0.28),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(0,36,148,0.28),transparent_20%),linear-gradient(180deg,rgba(3,11,72,1),rgba(6,27,133,1) 35%,rgba(10,31,85,1) 100%)] text-white">
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,103,255,0.20),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(0,36,148,0.22),transparent_20%),linear-gradient(180deg,rgba(3,11,72,0.95),rgba(6,27,133,0.9))]" />
-        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/90 to-transparent" />
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(0,103,255,0.28),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(0,36,148,0.28),transparent_20%),linear-gradient(180deg,rgba(3,11,72,1),rgba(6,27,133,1) 35%,rgba(10,31,85,1) 100%)] text-white">
+      <section className="relative">
+        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/50 to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-sky-100">Business Intelligence Max</div>
             <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl">Welcome to Business Intelligence Max</h1>
-            <p className="text-xl leading-9 text-slate-200/90">Your Apt Business Operational Advisory.</p>
-            <div className="grid gap-4 sm:max-w-lg sm:grid-cols-[1.15fr_0.85fr]">
-              <button onClick={handleBusinessSelection} className="rounded-3xl bg-white/10 px-8 py-5 text-lg font-semibold text-white shadow-xl shadow-slate-950/20 ring-1 ring-white/20 transition hover:bg-white/15">Business</button>
-              <button disabled className="rounded-3xl border border-white/15 bg-white/5 px-8 py-5 text-left text-lg font-semibold text-slate-200 opacity-80">
-                <span>Personal</span>
-                <span className="mt-2 block text-xs uppercase tracking-[0.22em] text-slate-300">Coming soon</span>
-              </button>
+            <div className="w-fit space-y-6">
+              <p className="text-xl leading-9 text-slate-200/90">Your Apt Business Operational Advisory.</p>
+              <button onClick={handleBusinessSelection} className="w-full rounded-3xl bg-blue-600 px-8 py-5 text-lg font-semibold text-white shadow-xl shadow-blue-900/20 transition hover:bg-blue-500">Get Started</button>
             </div>
           </div>
         </div>
       </section>
 
-      {isConsultingReady && (
-      <>
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="mb-6 flex items-center justify-between"><div><p className="text-sm text-slate-500">Phase 1 — Free Audit</p><h2 className="text-3xl font-semibold">{step.title}</h2></div><span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">{completion}%</span></div>
-          <p className="mb-6 text-slate-600 dark:text-slate-300">{step.prompt}</p><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full bg-blue-600 dark:bg-cyan-300" style={{ width: `${completion}%` }} /></div>
-          <div className="space-y-4">{step.fields.map(field => <label key={field.name} className="block"><span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">{field.label}</span>{field.type === "textarea" ? <textarea value={form[step.key][field.name]} onChange={event => updateField(field.name, event.target.value)} rows={3} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-cyan-300" /> : <select value={form[step.key][field.name]} onChange={event => updateField(field.name, event.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-cyan-300"><option value="">Select...</option>{field.options?.map(option => <option key={option} value={option}>{option}</option>)}</select>}</label>)}</div>
-          <div className="mt-6 flex justify-between gap-3"><button disabled={currentStep === 0 || isGenerating} onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))} className="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-600 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300">Back</button>{currentStep < steps.length - 1 ? <button disabled={!isStepComplete || isGenerating} onClick={() => setCurrentStep(prev => prev + 1)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-blue-400">Continue <ArrowRight size={16} /></button> : <button disabled={!isStepComplete || isGenerating} onClick={submitAudit} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-blue-400">{isGenerating ? "Running Institutional Audit..." : "Generate Free Audit"} <Sparkles size={16} /></button>}</div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60"><div className="mb-5 flex items-center justify-between"><h2 className="text-2xl font-semibold">Instant Audit Output</h2><Gauge className="text-blue-600 dark:text-cyan-300" /></div>{!audit ? <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700">Complete the diagnostic to generate your operational score, bottlenecks, recommendations and roadmap.</div> : <div className="space-y-5"><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-xl bg-slate-100 p-4 dark:bg-slate-950"><p className="text-sm text-slate-500">Operational Score</p><p className="text-4xl font-semibold text-blue-600 dark:text-cyan-300">{audit.score}</p></div><div className="rounded-xl bg-slate-100 p-4 dark:bg-slate-950"><p className="text-sm text-slate-500">Tier</p><p className="text-2xl font-semibold">{tier}</p></div><div className="rounded-xl bg-slate-100 p-4 dark:bg-slate-950"><p className="text-sm text-slate-500">Credits</p><p className="text-2xl font-semibold">{credits}</p></div></div><AuditList title="Key Bottlenecks" items={audit.bottlenecks} /><AuditList title="Growth Constraints" items={audit.constraints} /><AuditList title="System Recommendations" items={audit.recommendations} /><AuditList title="30-Day Priority Roadmap" items={audit.roadmap} /><div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><h3 className="mb-2 font-semibold">Executive Summary</h3><p className="text-slate-600 dark:text-slate-300">{audit.summary}</p></div></div>}</div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60"><div className="mb-5 flex items-center justify-between"><h2 className="text-2xl font-semibold">Pro Generation System</h2><Lock className="text-slate-400" /></div><div className="grid gap-3 sm:grid-cols-2">{creditActions.map(action => { const Icon = action.icon; const locked = tier === "Free"; return <button key={action.name} onClick={() => spendCredits(action.action, action.credits)} disabled={locked || credits < action.credits || isGenerating} className="flex items-center justify-between rounded-xl border border-slate-200 p-4 text-left transition hover:border-blue-500 disabled:opacity-55 dark:border-slate-800 dark:hover:border-cyan-300"><span className="flex items-center gap-3"><Icon size={18} /> {action.name}</span><span className="text-sm text-slate-500">{action.credits} credits</span></button> })}</div><div className="mt-5 grid gap-3 sm:grid-cols-3">{(["Free", "Pro", "Max"] as Tier[]).map(plan => <button key={plan} disabled className={`rounded-xl border p-4 text-left transition disabled:cursor-not-allowed ${tier === plan ? "border-blue-600 bg-blue-50 dark:border-cyan-300 dark:bg-cyan-300/10" : "border-slate-200 opacity-60 dark:border-slate-800"}`}><p className="font-semibold">{plan}</p><p className="text-sm text-slate-500">{plan === "Free" ? "15 signup credits" : plan === "Pro" ? "250 monthly credits" : "1000 monthly credits"}</p></button>)}</div></div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/60 dark:shadow-black/20">
-          <div className="mb-5 flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-blue-600 dark:text-cyan-300">Authenticated Consulting Terminal</p>
-              <h2 className="text-3xl font-semibold">Business Intelligence Max Command Line</h2>
-            </div>
-            <div className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300">{user?.email ? `Saving under ${user.email}` : "Sign in required"}</div>
-          </div>
-          <div className="mb-4 max-h-[420px] space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-            {messages.map((message, index) => <div key={`${message.createdAt}-${index}`} className={`rounded-xl p-4 ${message.role === "user" ? "ml-auto max-w-3xl bg-blue-600 text-white dark:bg-cyan-300 dark:text-slate-950" : "mr-auto max-w-4xl border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"}`}><p className="mb-1 text-xs font-semibold uppercase opacity-70">{message.role === "user" ? "You" : "Business Intelligence Max"}</p><p className="whitespace-pre-line text-sm leading-relaxed">{message.content}</p></div>)}
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <textarea value={terminalInput} onChange={event => setTerminalInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) sendTerminalMessage() }} rows={3} placeholder={user ? "Ask for a diagnosis, execution plan, KPI system, SOP, or decision support..." : "Sign in to activate saved consulting memory..."} className="min-h-24 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-cyan-300" />
-            <button disabled={!terminalInput.trim() || isSavingConversation} onClick={sendTerminalMessage} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 dark:bg-white dark:text-slate-950 dark:hover:bg-cyan-300"><Zap size={18} /> {isSavingConversation ? "Saving..." : "Send & Save"}</button>
-          </div>
-          <p className="mt-3 text-xs text-slate-500">Use Cmd/Ctrl + Enter to send. Messages are persisted to `ai_conversations` under the authenticated user from the signed Worker token.</p>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8"><div className="grid gap-4 md:grid-cols-5">{[["Dashboard", "/consulting/dashboard", BarChart3], ["Reports", "/consulting/reports", FileText], ["Billing", "/consulting/billing", CreditCard], ["History", "/consulting/history", History], ["Settings", "/consulting/settings", Settings]].map(([label, href, Icon]) => { const C = Icon as typeof BarChart3; return <Link key={String(href)} href={String(href)} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 font-semibold transition hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-cyan-300"><span className="flex items-center gap-3"><C size={18} />{String(label)}</span><ChevronRight size={16} /></Link> })}</div></section>
-      </>)}
       {showAuth && <AuthOverlay onClose={() => setShowAuth(false)} onAuthenticated={handleAuthSuccess} selectedPath={selectedPath} />}
     </main>
   )
@@ -359,9 +210,14 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
       setVerificationLink("")
 
       if (mode === "signup") {
-        const result = await businessIntelligenceApi.requestEmailVerification(email, name, window.location.origin)
-        setVerificationLink(result.verificationUrl)
-        setProviderMessage("A verification link has been generated. Click it to verify your email.")
+        const result = await businessIntelligenceApi.requestEmailVerification(email, name, `${window.location.origin}/consulting`)
+        if (result.verificationUrl) {
+          // Development mode fallback when no RESEND_API_KEY is configured
+          setVerificationLink(result.verificationUrl)
+          setProviderMessage("Development mode: Click the link below to verify.")
+        } else {
+          setProviderMessage(`A verification link has been sent to ${email}. Please check your inbox.`)
+        }
         return
       }
 
@@ -383,7 +239,7 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
     }
     const route = providerRoutes[provider as keyof typeof providerRoutes]
     if (route) {
-      const redirectTo = encodeURIComponent(window.location.origin)
+      const redirectTo = encodeURIComponent(`${window.location.origin}/consulting`)
       window.location.href = `${workerUrl}${route}?redirect_to=${redirectTo}`
     } else {
       setProviderMessage(`${provider} sign in is not configured yet. Use secure email access to continue today.`)
@@ -397,7 +253,6 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
           <div>
             <p className="text-sm uppercase tracking-[0.28em] text-sky-300/80">Productivity Maxing</p>
             <h2 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">Sign Up / Sign In</h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">Secure your official Productivity Maxing advisory experience. One secure sign in gives you access to Business Intelligence Max consulting and saved operational memory.</p>
           </div>
           <button onClick={onClose} className="inline-flex items-center justify-center rounded-3xl border border-slate-700 bg-slate-900/80 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800">Back to welcome</button>
         </div>
@@ -451,7 +306,10 @@ function AuthOverlay({ onClose, onAuthenticated, selectedPath }: { onClose: () =
           <button disabled={isSigningIn || !email.trim()} onClick={handleEmailAction} className="mt-6 w-full rounded-3xl bg-sky-500 px-6 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60">
             {isSigningIn ? (mode === "signup" ? "Sending verification..." : "Signing in...") : (mode === "signup" ? "Continue with email" : "Sign in with email")}
           </button>
-          <p className="mt-4 text-sm leading-6 text-slate-400">Your session is protected by Cloudflare Worker token authentication. We will verify your email before unlocking Business Intelligence Max.</p>
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm font-semibold text-slate-400">
+            <ShieldCheck size={16} className="text-sky-500" />
+            Secure Sign-In
+          </div>
         </div>
       </div>
     </div>

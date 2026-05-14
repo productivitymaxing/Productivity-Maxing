@@ -1,9 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { sendVerificationEmail } from "./utils/email"
 
 export interface Env {
   DB: any
   productivity_maxing_db: D1Database
   JWT_SECRET: string
+  RESEND_API_KEY?: string
   GEMINI_API_KEY: string
   GOOGLE_CLIENT_ID?: string
   GOOGLE_CLIENT_SECRET?: string
@@ -79,6 +81,7 @@ const worker = {
       else if (url.pathname === "/api/auth/github/callback" && request.method === "GET") response = await handleGitHubCallback(request, env)
       else if (url.pathname === "/api/auth/verify-request" && request.method === "POST") response = await handleEmailVerifyRequest(request, env)
       else if (url.pathname === "/api/auth/verify" && request.method === "GET") response = await handleEmailVerify(request, env)
+      else if (url.pathname === "/api/auth/verify-token" && request.method === "POST") response = await handleVerifyToken(request, env)
       else if (url.pathname === "/api/auth/apple" && request.method === "GET") response = await handleAppleAuth(request, env)
       else if (url.pathname === "/api/auth/apple/callback" && (request.method === "POST" || request.method === "GET")) response = await handleAppleCallback(request, env)
       else if (url.pathname === "/api/auth/login" && request.method === "POST") response = await handleLogin(request, env)
@@ -88,6 +91,8 @@ const worker = {
       else if (url.pathname === "/api/audits" && request.method === "GET") response = await handleListAudits(request, env)
       else if (url.pathname === "/api/audits" && request.method === "POST") response = await handleCreateAudit(request, env)
       else if (url.pathname === "/api/credits/spend" && request.method === "POST") response = await handleSpendCredits(request, env)
+      else if (url.pathname === "/api/onboarding-progress" && request.method === "GET") response = await handleGetOnboardingProgress(request, env)
+      else if (url.pathname === "/api/onboarding-progress" && request.method === "POST") response = await handleSaveOnboardingProgress(request, env)
       else if (url.pathname === "/api/conversations" && request.method === "GET") response = await handleListConversations(request, env)
       else if (url.pathname === "/api/conversations" && request.method === "POST") response = await handleSaveConversation(request, env)
       else if (url.pathname === "/api/ai/reply" && request.method === "POST") response = await handleGeminiReply(request, env)
@@ -132,6 +137,12 @@ async function handleEmailVerifyRequest(request: Request, env: Env) {
   const redirectTo = body.redirectTo || new URL(request.url).origin
   const verificationUrl = `${new URL(request.url).origin}/api/auth/verify?token=${encodeURIComponent(token)}&redirect_to=${encodeURIComponent(redirectTo)}`
 
+  // Send email if API key is configured
+  if (env.RESEND_API_KEY) {
+    await sendVerificationEmail(email, body.name || email.split('@')[0], verificationUrl, env.RESEND_API_KEY)
+    return json({ success: true })
+  }
+
   return json({ verificationUrl })
 }
 
@@ -157,6 +168,24 @@ async function handleEmailVerify(request: Request, env: Env) {
     status: 302,
     headers: { Location: frontendUrl },
   })
+}
+
+async function handleVerifyToken(request: Request, env: Env) {
+  if (!env.JWT_SECRET) return json({ error: "JWT_SECRET is not configured for Business Intelligence Max." }, 500)
+  const body = await request.json() as { token?: string }
+  if (!body.token) return json({ error: "Verification token is required." }, 400)
+
+  let payload
+  try {
+    payload = await verifyEmailVerificationToken(body.token, env.JWT_SECRET)
+  } catch {
+    return json({ error: "Invalid or expired verification token." }, 400)
+  }
+
+  const user = await upsertUserByEmail(env, payload.email, payload.name)
+  const sessionToken = await signSessionToken({ sub: user.id, email: user.email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }, env.JWT_SECRET)
+  
+  return json({ token: sessionToken, user })
 }
 
 async function handleGoogleAuth(request: Request, env: Env) {
@@ -587,6 +616,28 @@ async function handleListConversations(request: Request, env: Env) {
   const user = await requireUser(request, env)
   const { results } = await env.productivity_maxing_db.prepare("SELECT * FROM ai_conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT 20").bind(user.id).all()
   return json({ conversations: results, userEmail: user.email })
+}
+
+async function handleGetOnboardingProgress(request: Request, env: Env) {
+  const user = await requireUser(request, env)
+  const log = await env.productivity_maxing_db.prepare("SELECT metadata_json FROM usage_logs WHERE user_id = ? AND action = 'onboarding_progress' ORDER BY created_at DESC LIMIT 1").bind(user.id).first<{ metadata_json: string }>()
+  
+  if (!log) return json({ form: null, currentStep: 0 })
+  
+  try {
+    const data = JSON.parse(log.metadata_json)
+    return json({ form: data.form || null, currentStep: data.currentStep || 0 })
+  } catch {
+    return json({ form: null, currentStep: 0 })
+  }
+}
+
+async function handleSaveOnboardingProgress(request: Request, env: Env) {
+  const user = await requireUser(request, env)
+  const body = await request.json() as { form: DiagnosticForm; currentStep: number }
+  
+  await logUsage(env, user.id, "onboarding_progress", { form: body.form, currentStep: body.currentStep })
+  return json({ success: true })
 }
 
 async function handleSaveConversation(request: Request, env: Env) {

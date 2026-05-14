@@ -132,7 +132,12 @@ export const businessIntelligenceApi = {
     return result
   },
   async requestEmailVerification(email: string, name?: string, redirectTo?: string) {
-    return request<{ verificationUrl: string }>("/api/auth/verify-request", { method: "POST", body: JSON.stringify({ email, name, redirectTo }) })
+    return request<{ success: boolean; verificationUrl?: string }>("/api/auth/verify-request", { method: "POST", body: JSON.stringify({ email, name, redirectTo }) })
+  },
+  async verifyEmailToken(token: string) {
+    const result = await request<{ token: string; user: BusinessIntelligenceUser }>("/api/auth/verify-token", { method: "POST", body: JSON.stringify({ token }) })
+    setSessionToken(result.token)
+    return result
   },
   logout() {
     clearSessionToken()
@@ -166,5 +171,11 @@ export const businessIntelligenceApi = {
   },
   listAssets() {
     return request<{ assets: unknown[] }>("/api/assets")
+  },
+  saveOnboardingProgress(form: DiagnosticForm, currentStep: number) {
+    return request<{ success: boolean }>("/api/onboarding-progress", { method: "POST", body: JSON.stringify({ form, currentStep }) })
+  },
+  getOnboardingProgress() {
+    return request<{ form: DiagnosticForm | null; currentStep: number }>("/api/onboarding-progress")
   },
 }

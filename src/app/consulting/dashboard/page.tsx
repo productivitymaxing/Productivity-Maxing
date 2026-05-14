@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, BarChart3, Gauge, Workflow, ChevronRight, History, ShieldCheck, ListTodo } from "lucide-react"
+import { ArrowLeft, BarChart3, Gauge, Workflow, ChevronRight, History, ShieldCheck, ListTodo, LogOut } from "lucide-react"
 import { businessIntelligenceApi, normalizeAudit, type Audit, type BusinessIntelligenceUser } from "@/lib/businessIntelligenceApi"
+
+import { useRouter } from "next/navigation"
 
 type StoredState = {
   user?: BusinessIntelligenceUser
@@ -11,27 +13,47 @@ type StoredState = {
 }
 
 export default function ConsultingDashboardPage() {
+  const router = useRouter()
   const [state, setState] = useState<StoredState>({})
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
+  const handleSignOut = () => {
+    businessIntelligenceApi.logout()
+    router.push("/consulting")
+  }
+
   useEffect(() => {
+    // Check for OAuth token in URL directly on dashboard
+    const urlParams = new URLSearchParams(window.location.search)
+    const token = urlParams.get("token")
+    if (token) {
+      window.localStorage.setItem("business-intelligence-max-token", token)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+
     const loadDashboard = async () => {
       try {
         const [session, auditHistory] = await Promise.all([
           businessIntelligenceApi.session(),
           businessIntelligenceApi.listAudits(),
         ])
+        
+        if (auditHistory.audits.length === 0) {
+          router.push("/consulting/portal")
+          return
+        }
+        
         setState({ user: session.user, audit: auditHistory.audits[0] ? normalizeAudit(auditHistory.audits[0]) : undefined })
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Unable to load dashboard.")
+        router.push("/consulting")
       } finally {
         setIsLoading(false)
       }
     }
 
     loadDashboard()
-  }, [])
+  }, [router])
 
   return (
     <main className="min-h-screen bg-white text-slate-950 transition-colors duration-300 dark:bg-slate-950 dark:text-white">
@@ -45,9 +67,14 @@ export default function ConsultingDashboardPage() {
             <h1 className="text-4xl font-semibold tracking-tight">Operational Dashboard</h1>
             <p className="mt-2 text-slate-600 dark:text-slate-300">Executive view of operating score, constraints, credits and generated systems.</p>
           </div>
-          <Link href="/consulting/history" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
-            <History size={16} /> View Audit History
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/consulting/history" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
+              <History size={16} /> View Audit History
+            </Link>
+            <button onClick={handleSignOut} className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-950/30">
+              <LogOut size={16} /> Sign Out
+            </button>
+          </div>
         </div>
         {isLoading && <StatusPanel message="Loading institutional operating dashboard from Cloudflare business memory..." />}
         {errorMessage && <ErrorPanel message={errorMessage} />}
