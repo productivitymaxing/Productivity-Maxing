@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { shouldHideSiteChrome } from '@/lib/consoleRoutes'
 import Image from 'next/image'
 import { Menu, MessageCircle, Moon, Sun, X } from 'lucide-react'
 
 export default function Navigation() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -25,6 +28,10 @@ export default function Navigation() {
     setIsDark(nextThemeIsDark)
     document.documentElement.classList.toggle('dark', nextThemeIsDark)
     localStorage.setItem('theme', nextThemeIsDark ? 'dark' : 'light')
+  }
+
+  if (shouldHideSiteChrome(pathname)) {
+    return null
   }
 
   return (

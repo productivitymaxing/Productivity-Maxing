@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { BarChart3, Bot, MessageSquareText, Sparkles, Zap } from 'lucide-react'
+import { Layers, LayoutDashboard, Sparkles, TrendingUp, Zap } from 'lucide-react'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -47,28 +47,29 @@ export default function Home() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Product Highlight</h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300">Create Max: Precision-Built Content Marketing Engine</p>
+            <p className="mt-3 text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">Business Intelligence Max</p>
+            <p className="mt-1 text-sm sm:text-base text-slate-600 dark:text-slate-300">The Elite Business Operating System (BOS)</p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-              <MessageSquareText className="text-blue-600" size={20} />
-              <h3 className="mt-4 text-xl font-semibold">Superior Workflow</h3>
-              <p className="mt-2 text-slate-600 dark:text-slate-300">Built to execute content operations without drag.</p>
+              <LayoutDashboard className="text-blue-600 dark:text-blue-400" size={20} />
+              <h3 className="mt-4 text-xl font-semibold">Central Command</h3>
+              <p className="mt-2 text-slate-600 dark:text-slate-300">A single, premium dashboard for business owners to track every critical factor driving business growth, scale, and operational velocity.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-              <Bot className="text-blue-600" size={20} />
-              <h3 className="mt-4 text-xl font-semibold">Brand Voice Synthesis</h3>
-              <p className="mt-2 text-slate-600 dark:text-slate-300">Keep messaging consistent as output volume grows.</p>
+              <Layers className="text-blue-600 dark:text-blue-400" size={20} />
+              <h3 className="mt-4 text-xl font-semibold">Unified Ecosystem</h3>
+              <p className="mt-2 text-slate-600 dark:text-slate-300">The ultimate business moat. Once implemented, your entire corporate infrastructure—from Pro-Diagnose audits to customer acquisition pipelines—lives in one highly secure environment.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-              <BarChart3 className="text-blue-600" size={20} />
-              <h3 className="mt-4 text-xl font-semibold">Predictive Performance Tracker</h3>
-              <p className="mt-2 text-slate-600 dark:text-slate-300">Track what works and improve performance ahead of lag.</p>
+              <TrendingUp className="text-blue-600 dark:text-blue-400" size={20} />
+              <h3 className="mt-4 text-xl font-semibold">Predictive Scale</h3>
+              <p className="mt-2 text-slate-600 dark:text-slate-300">Move past basic analytics. Coherently integrates operational advisory, customer relationship management (CRM), and deep metric forecasting to track exactly where your revenue is, and where it has the absolute leverage to be.</p>
             </div>
           </div>
           <div className="mt-6">
-            <Link href="/business-tools" className="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition">
-              Try for free
+            <Link href="/consulting" className="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition">
+              Explore Business Intelligence Max
             </Link>
           </div>
         </div>

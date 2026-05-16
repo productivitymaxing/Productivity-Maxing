@@ -10,6 +10,7 @@ export type Audit = {
   recommendations: string[]
   roadmap: string[]
   summary: string
+  form_json?: string
   created_at?: string
   bottlenecks_json?: string
   constraints_json?: string
