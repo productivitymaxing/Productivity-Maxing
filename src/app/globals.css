@@ -8,12 +8,11 @@ html {
 
 body {
   font-family: var(--font-clash-display), sans-serif;
-  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300;
 }
 
 /* Public consulting landing: theme-independent shell (background lives in layout) */
 .consulting-landing-shell {
-  background-color: #010818;
+  background-color: #000b29;
   color: #ffffff;
 }
 

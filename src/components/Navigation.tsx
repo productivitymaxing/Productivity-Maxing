@@ -5,13 +5,14 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { shouldHideSiteChrome } from '@/lib/consoleRoutes'
 import Image from 'next/image'
-import { Menu, MessageCircle, Moon, Sun, X } from 'lucide-react'
+import { Menu, MessageCircle, Moon, Sun, X, LayoutDashboard, Layers, Settings2 } from 'lucide-react'
 
 export default function Navigation() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [hasAudit, setHasAudit] = useState(false)
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme')
@@ -20,6 +21,20 @@ export default function Navigation() {
 
     setIsDark(shouldUseDark)
     document.documentElement.classList.toggle('dark', shouldUseDark)
+    
+    // Check for audit data
+    const draft = localStorage.getItem('bi-max-pro-diagnose-draft')
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft)
+        if (parsed.financials?.currentMonthlyRevenue) {
+          setHasAudit(true)
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
     setMounted(true)
   }, [])
 
@@ -55,6 +70,31 @@ export default function Navigation() {
             <Link href="/about" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition">About</Link>
             <Link href="/business-tools" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition">Tools</Link>
             <Link href="/consulting" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition">Consulting</Link>
+            {hasAudit && (
+              <>
+                <Link 
+                  href="/dashboard" 
+                  className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold transition"
+                >
+                  <LayoutDashboard size={14} />
+                  Dashboard
+                </Link>
+                <Link 
+                  href="/scale" 
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition"
+                >
+                  <Layers size={14} />
+                  Scale
+                </Link>
+                <Link 
+                  href="/operations" 
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition"
+                >
+                  <Settings2 size={14} />
+                  Ops
+                </Link>
+              </>
+            )}
             <button
               onClick={toggleTheme}
               className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -95,6 +135,34 @@ export default function Navigation() {
             <Link href="/about" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">About</Link>
             <Link href="/business-tools" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Tools</Link>
             <Link href="/consulting" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Consulting</Link>
+            {hasAudit && (
+              <>
+                <Link 
+                  href="/dashboard" 
+                  onClick={() => setIsOpen(false)} 
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-blue-600 font-semibold hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition"
+                >
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </Link>
+                <Link 
+                  href="/scale" 
+                  onClick={() => setIsOpen(false)} 
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+                >
+                  <Layers size={16} />
+                  Scale
+                </Link>
+                <Link 
+                  href="/operations" 
+                  onClick={() => setIsOpen(false)} 
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+                >
+                  <Settings2 size={16} />
+                  Operations
+                </Link>
+              </>
+            )}
             <Link
               href="/onboarding"
               onClick={() => setIsOpen(false)}

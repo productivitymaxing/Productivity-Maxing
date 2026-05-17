@@ -170,16 +170,45 @@ export default function ConsultingPage() {
   }, [router])
 
   return (
-    <main className="relative min-h-screen">
-      <section className="relative">
+    <main className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden">
+      <section className="relative w-full">
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-          <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-sky-100">Business Intelligence Max</div>
-            <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl">Welcome to Business Intelligence Max</h1>
-            <div className="w-fit space-y-6">
-              <p className="text-xl leading-9 text-slate-200/90">Your Apt Business Operational Advisory.</p>
-              <button onClick={handleBusinessSelection} className="w-full rounded-3xl bg-blue-600 px-8 py-5 text-lg font-semibold text-white shadow-xl shadow-blue-900/20 transition hover:bg-blue-500">Get Started</button>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            {/* Button 1: AI Tool (Primary) */}
+            <button 
+              onClick={handleBusinessSelection}
+              className="group relative flex flex-col justify-between items-start gap-12 h-full rounded-[2.5rem] border border-blue-400/40 bg-blue-600/90 p-10 text-left transition-all duration-300 hover:bg-blue-500 hover:scale-[1.01] hover:shadow-[0_20px_60px_-15px_rgba(37,99,235,0.4)] active:scale-[0.99]"
+            >
+              <div className="flex w-full items-center justify-between">
+                <div className="rounded-2xl bg-white/10 p-5">
+                  <Brain className="h-12 w-12 text-blue-50" />
+                </div>
+                <ArrowRight className="h-10 w-10 transition-transform duration-300 group-hover:translate-x-2" />
+              </div>
+              <div className="space-y-6">
+                <h3 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">Business Intelligence Max</h3>
+                <p className="text-xl sm:text-2xl text-blue-50/70 leading-relaxed font-medium max-w-md">Deploy automated operations and performance diagnostics.</p>
+              </div>
+              {/* Animated Glow Effect */}
+              <div className="absolute inset-0 -z-10 rounded-[2.5rem] bg-blue-400/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            </button>
+
+            {/* Button 2: Human Consultant (Secondary) */}
+            <button 
+              onClick={() => router.push("/onboarding")}
+              className="group relative flex flex-col justify-between items-start gap-12 h-full rounded-[2.5rem] border border-white/10 bg-white/5 p-10 text-left backdrop-blur-3xl transition-all duration-300 hover:bg-white/10 hover:scale-[1.01] hover:border-white/30 active:scale-[0.99]"
+            >
+              <div className="flex w-full items-center justify-between">
+                <div className="rounded-2xl bg-white/5 p-5">
+                  <User className="h-12 w-12 text-white" />
+                </div>
+                <MessageSquare className="h-10 w-10 transition-transform duration-300 group-hover:translate-x-2" />
+              </div>
+              <div className="space-y-6">
+                <h3 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">Talk to a Human Consultant</h3>
+                <p className="text-xl sm:text-2xl text-slate-300/80 leading-relaxed font-medium max-w-md">Schedule a strategic session with our elite performance team.</p>
+              </div>
+            </button>
           </div>
         </div>
       </section>
